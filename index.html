@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NECS 2026 — Executive Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root {
+  --gold: #C9A24A; --gold-soft: #E6CB8A; --gold-deep: #8E6F2A;
+  --gold-glow: rgba(201, 162, 74, 0.28); --gold-line: rgba(201, 162, 74, 0.18);
+  --bg: #08080A; --bg-stage: #050507;
+  --surface-1: #111114; --surface-2: #17171B; --surface-3: #1E1E23;
+  --border: #26262C; --border-soft: #1B1B20;
+  --text: #F4F1EA; --text-soft: #B8B2A5; --text-mute: #8A857A;
+  --live: #E5564A; --success: #6FBF8B; --info: #6CA2FF;
+  --serif: 'Cormorant Garamond', 'Times New Roman', serif;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --r-sm: 8px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px;
+  --ease-luxe: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-snap: cubic-bezier(0.4, 0, 0.2, 1);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; padding:0; background: var(--bg-stage); color: var(--text); font-family: var(--sans); font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; }
+button { font-family: inherit; }
+button:focus-visible, [role="button"]:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
+
+.stage { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; position: relative; background: radial-gradient(900px 600px at 20% 10%, rgba(201, 162, 74, 0.08), transparent 60%), radial-gradient(900px 600px at 80% 90%, rgba(201, 162, 74, 0.05), transparent 60%), var(--bg-stage); }
+.stage::before { content: ""; position: fixed; inset: 0; background-image: linear-gradient(to right, rgba(255,255,255,0.012) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.012) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+
+.chrome { position: relative; z-index: 2; padding: 28px 40px 16px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark { width: 38px; height: 38px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, var(--gold-soft), var(--gold) 50%, var(--gold-deep)); position: relative; box-shadow: 0 0 24px var(--gold-glow), inset 0 0 12px rgba(0,0,0,0.4); }
+.brand-mark::after { content: "N"; position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--serif); font-weight: 700; font-size: 20px; color: #1a1408; letter-spacing: -0.5px; }
+.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-text .b1 { font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: 0.5px; }
+.brand-text .b2 { font-size: 10px; font-weight: 500; letter-spacing: 2.5px; color: var(--text-mute); text-transform: uppercase; margin-top: 2px; }
+.mode-switch { display: flex; gap: 4px; background: var(--surface-1); border: 1px solid var(--border); padding: 4px; border-radius: 999px; }
+.mode-btn { padding: 9px 20px; background: transparent; border: none; color: var(--text-mute); font-size: 12px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-radius: 999px; transition: color 0.3s var(--ease-snap), background 0.3s var(--ease-snap); display: flex; align-items: center; gap: 8px; }
+.mode-btn:hover { color: var(--text); }
+.mode-btn[aria-pressed="true"] { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1408; box-shadow: 0 4px 18px var(--gold-glow); }
+.chrome-meta { display: flex; align-items: center; gap: 20px; font-size: 11px; color: var(--text-mute); letter-spacing: 1.5px; text-transform: uppercase; }
+.chrome-meta .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 10px var(--success); display: inline-block; margin-right: 8px; animation: pulse 2s var(--ease-luxe) infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.emulator-wrap { position: relative; z-index: 1; display: grid; place-items: center; padding: 20px 40px 40px; perspective: 2000px; }
+.device { position: relative; background: linear-gradient(155deg, #1f1f24 0%, #0c0c10 50%, #1a1a1f 100%); border-radius: 56px; padding: 12px; box-shadow: 0 50px 120px -20px rgba(0,0,0,0.8), 0 30px 60px -15px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.04), inset 0 0 30px rgba(0,0,0,0.4), 0 0 0 1px var(--gold-line); transition: width 0.7s var(--ease-luxe), height 0.7s var(--ease-luxe), border-radius 0.7s var(--ease-luxe); }
+.device::before { content: ""; position: absolute; inset: 1px; border-radius: 55px; background: linear-gradient(155deg, rgba(255,255,255,0.06) 0%, transparent 25%, transparent 75%, rgba(255,255,255,0.04) 100%); pointer-events: none; z-index: 1; }
+.device-btn { position: absolute; background: linear-gradient(90deg, #2a2a2f, #1a1a1f); border-radius: 2px; z-index: 0; }
+.device-btn.power { right: -2px; top: 130px; width: 4px; height: 90px; }
+.device-btn.vol-up { left: -2px; top: 110px; width: 4px; height: 60px; }
+.device-btn.vol-down { left: -2px; top: 180px; width: 4px; height: 60px; }
+.device-btn.mute { left: -2px; top: 70px; width: 4px; height: 30px; }
+.device.iphone { width: 392px; height: 820px; }
+.device.tablet { width: 720px; height: 940px; border-radius: 44px; padding: 16px; }
+.device.tablet::before { border-radius: 43px; }
+.device.tablet .dynamic-island { display: none; }
+.dynamic-island { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: 118px; height: 34px; background: #000; border-radius: 20px; z-index: 100; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04); }
+.dynamic-island::after { content: ""; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #2a2a30, #050505 60%); }
+.tablet-camera { display: none; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #2a2a30, #050505 60%); z-index: 100; }
+.device.tablet .tablet-camera { display: block; }
+.screen { width: 100%; height: 100%; border-radius: 44px; background: var(--bg); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+.device.tablet .screen { border-radius: 28px; }
+
+.status-bar { position: absolute; top: 0; left: 0; right: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 16px 32px 0; font-size: 13px; font-weight: 600; color: var(--text); z-index: 50; pointer-events: none; }
+.device.tablet .status-bar { padding: 12px 28px 0; height: 44px; }
+.status-bar .indicators { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.status-bar .battery { width: 24px; height: 11px; border: 1px solid var(--text); border-radius: 3px; position: relative; margin-left: 4px; }
+.status-bar .battery::after { content: ""; position: absolute; right: -3px; top: 2px; width: 2px; height: 5px; background: var(--text); border-radius: 0 1px 1px 0; }
+.status-bar .battery::before { content: ""; position: absolute; left: 1px; top: 1px; bottom: 1px; width: 80%; background: var(--text); border-radius: 1px; }
+
+.app-header { position: absolute; top: 56px; left: 0; right: 0; height: 56px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; z-index: 45; background: linear-gradient(to bottom, var(--bg) 70%, transparent); }
+.device.tablet .app-header { top: 44px; }
+.app-header-title { font-family: var(--serif); font-size: 16px; font-weight: 600; letter-spacing: 0.3px; }
+.menu-btn { width: 40px; height: 40px; background: transparent; border: none; color: var(--text); cursor: pointer; display: grid; place-items: center; font-size: 16px; border-radius: 50%; transition: background 0.3s var(--ease-snap); position: relative; }
+.menu-btn:hover { background: var(--surface-1); }
+.menu-btn.right { color: var(--gold); }
+.cart-count-badge { position: absolute; top: 4px; right: 4px; min-width: 16px; height: 16px; background: var(--gold); color: #1a1408; border-radius: 999px; font-size: 9px; font-weight: 700; display: grid; place-items: center; padding: 0 4px; border: 2px solid var(--bg); }
+
+.screen-content { flex: 1; overflow: hidden; position: relative; padding-top: 112px; }
+.device.tablet .screen-content { padding-top: 100px; }
+
+.view { position: absolute; inset: 112px 0 92px 0; overflow-y: auto; overflow-x: hidden; opacity: 0; transform: translateX(20px); pointer-events: none; transition: opacity 0.4s var(--ease-luxe), transform 0.5s var(--ease-luxe); scroll-behavior: smooth; }
+.device.tablet .view { inset: 100px 0 84px 0; }
+.view.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+.view::-webkit-scrollbar { width: 0; }
+.view-inner { padding: 0 24px 32px; }
+.device.tablet .view-inner { padding: 0 40px 40px; }
+
+.subview { position: absolute; inset: 56px 0 0 0; background: var(--bg); z-index: 60; transform: translateY(100%); transition: transform 0.5s var(--ease-luxe); overflow-y: auto; display: flex; flex-direction: column; }
+.device.tablet .subview { inset: 44px 0 0 0; }
+.subview.open { transform: translateY(0); }
+.subview::-webkit-scrollbar { width: 0; }
+
+.menu-overlay { position: absolute; inset: 0; z-index: 110; background: rgba(8, 8, 10, 0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); opacity: 0; pointer-events: none; transition: opacity 0.4s var(--ease-luxe); display: flex; flex-direction: column; padding: 40px 24px 100px; overflow-y: auto; }
+.menu-overlay.open { opacity: 1; pointer-events: auto; }
+.menu-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; padding-top: 20px; }
+.menu-head h2 { font-family: var(--serif); font-size: 28px; font-weight: 600; margin: 0; }
+.menu-close { width: 42px; height: 42px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 50%; color: var(--text); cursor: pointer; display: grid; place-items: center; font-size: 14px; transition: all 0.3s var(--ease-snap); }
+.menu-close:hover { transform: rotate(90deg); border-color: var(--gold); }
+.menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.device.tablet .menu-grid { grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.menu-item { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); padding: 22px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; color: var(--text); transition: all 0.3s var(--ease-snap); position: relative; overflow: hidden; }
+.menu-item::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, var(--gold-glow), transparent 70%); opacity: 0; transition: opacity 0.4s var(--ease-luxe); }
+.menu-item:hover { border-color: var(--gold-line); transform: translateY(-3px); }
+.menu-item:hover::before { opacity: 1; }
+.menu-item i { font-size: 22px; color: var(--gold); position: relative; }
+.menu-item span { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; position: relative; }
+.menu-item.active { border-color: var(--gold); background: linear-gradient(145deg, rgba(201, 162, 74, 0.08), var(--surface-1)); }
+
+.eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+.eyebrow::before { content: ""; width: 18px; height: 1px; background: var(--gold); display: inline-block; }
+.h-display { font-family: var(--serif); font-weight: 600; font-size: 38px; line-height: 1.05; letter-spacing: -0.5px; margin: 8px 0; }
+.device.tablet .h-display { font-size: 52px; }
+.h-section { font-family: var(--serif); font-weight: 600; font-size: 24px; letter-spacing: -0.2px; display: flex; align-items: baseline; justify-content: space-between; margin: 0; }
+.h-section .more { font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-mute); background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.h-section .more:hover { color: var(--gold); }
+.muted { color: var(--text-soft); }
+
+.home-header { padding: 12px 0 24px; }
+.home-greet { font-family: var(--serif); font-size: 32px; font-weight: 500; line-height: 1.1; margin: 8px 0 4px; }
+.home-greet em { font-style: italic; background: linear-gradient(90deg, var(--gold-soft), var(--gold)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.home-sub { color: var(--text-mute); font-size: 13px; letter-spacing: 0.3px; }
+
+.hero { position: relative; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--border); background: linear-gradient(155deg, #1a1418 0%, #0e0e12 60%); padding: 24px; margin-bottom: 28px; cursor: pointer; transition: transform 0.5s var(--ease-luxe), border-color 0.4s var(--ease-luxe); }
+.hero:hover { transform: translateY(-2px); border-color: var(--gold-line); }
+.hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(400px 200px at 90% 110%, var(--gold-glow), transparent 60%), radial-gradient(300px 150px at 0% 0%, rgba(229, 86, 74, 0.15), transparent 60%); pointer-events: none; }
+.hero-top { display: flex; align-items: center; justify-content: space-between; position: relative; }
+.live-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; background: rgba(229, 86, 74, 0.12); border: 1px solid rgba(229, 86, 74, 0.3); border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--live); }
+.live-pill .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: pulse 1.5s ease-in-out infinite; }
+.hero-tag { font-size: 10px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mute); }
+.hero-game { font-family: var(--serif); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-top: 18px; position: relative; }
+.hero-matchup { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin: 18px 0 0; position: relative; }
+.team { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.team-crest { width: 56px; height: 56px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); display: grid; place-items: center; font-family: var(--serif); font-weight: 700; font-size: 20px; color: var(--text); }
+.team-crest.gold { border-color: var(--gold); box-shadow: 0 0 24px var(--gold-glow); color: var(--gold); }
+.team-name { font-size: 13px; font-weight: 500; }
+.team-record { font-size: 10px; color: var(--text-mute); letter-spacing: 0.5px; }
+.score-block { text-align: center; font-family: var(--mono); }
+.score-display { font-size: 40px; font-weight: 600; letter-spacing: -1px; color: var(--text); line-height: 1; }
+.score-display .vs { color: var(--text-mute); margin: 0 8px; font-weight: 400; }
+.score-display .lead { color: var(--gold); }
+.score-time { font-size: 10px; color: var(--text-mute); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 6px; }
+.hero-cta { margin-top: 22px; display: flex; align-items: center; justify-content: space-between; position: relative; padding-top: 18px; border-top: 1px solid var(--border); }
+.viewers { font-size: 11px; color: var(--text-soft); letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+.viewers i { color: var(--gold); }
+.btn-watch { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1408; border: none; padding: 9px 18px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px var(--gold-glow); transition: transform 0.3s var(--ease-snap), box-shadow 0.3s var(--ease-snap); }
+.btn-watch:hover { transform: translateY(-1px); box-shadow: 0 6px 22px var(--gold-glow); }
+
+.section { margin: 32px 0; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+
+.quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 28px; }
+.device.tablet .quick-grid { grid-template-columns: repeat(6, 1fr); }
+.quick-card { background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 16px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; color: var(--text); transition: all 0.3s var(--ease-snap); text-align: center; }
+.quick-card:hover { border-color: var(--gold-line); transform: translateY(-2px); }
+.quick-card i { font-size: 18px; color: var(--gold); }
+.quick-card span { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+
+.match-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: var(--r-md); margin-bottom: 10px; cursor: pointer; transition: border-color 0.3s var(--ease-snap), background 0.3s var(--ease-snap); }
+.match-row:hover { border-color: var(--gold-line); background: var(--surface-2); }
+.match-row .team-mini { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.match-row.right .team-mini { justify-content: flex-end; }
+.team-mini .crest-mini { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--border); display: grid; place-items: center; font-family: var(--serif); font-weight: 700; font-size: 12px; flex-shrink: 0; }
+.team-mini .name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.match-row .meta { text-align: center; font-family: var(--mono); font-size: 11px; color: var(--text-mute); letter-spacing: 0.5px; }
+.match-row .meta .time { display: block; color: var(--gold); font-size: 14px; font-weight: 600; }
+
+.teams-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.device.tablet .teams-strip { grid-template-columns: repeat(8, 1fr); }
+.team-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: var(--r-md); cursor: pointer; transition: all 0.3s var(--ease-snap); }
+.team-card:hover { border-color: var(--gold-line); transform: translateY(-2px); }
+.team-card .crest-md { width: 44px; height: 44px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--border); display: grid; place-items: center; font-family: var(--serif); font-weight: 700; font-size: 14px; color: var(--text); }
+.team-card .label { font-size: 10px; letter-spacing: 0.5px; color: var(--text-soft); text-align: center; }
+
+.countdown { margin: 28px 0; padding: 24px; border: 1px solid var(--gold-line); border-radius: var(--r-lg); background: radial-gradient(400px 200px at 50% 0%, rgba(201, 162, 74, 0.06), transparent 60%), var(--surface-1); text-align: center; }
+.countdown .eyebrow { justify-content: center; }
+.countdown .eyebrow::before { display: none; }
+.countdown .label { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--text-soft); margin-top: 8px; }
+.countdown-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+.cd-cell { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 14px 6px; }
+.cd-num { font-family: var(--mono); font-size: 26px; font-weight: 600; color: var(--gold); letter-spacing: -0.5px; }
+.cd-label { font-size: 9px; color: var(--text-mute); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+.game-divider { display: flex; align-items: center; gap: 12px; padding: 18px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.game-divider i { color: var(--gold); font-size: 14px; }
+.game-divider .gd-title { font-family: var(--serif); font-size: 16px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; flex: 1; }
+.game-divider .gd-count { font-size: 10px; color: var(--text-mute); letter-spacing: 1.5px; text-transform: uppercase; }
+
+.score-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); margin-bottom: 12px; overflow: hidden; cursor: pointer; transition: all 0.3s var(--ease-snap); }
+.score-card:hover { border-color: var(--gold-line); transform: translateY(-2px); }
+.score-card .sc-body { padding: 18px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+.score-card .sc-team { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.score-card .sc-team.lead .crest-mini { border-color: var(--gold); color: var(--gold); }
+.score-card .sc-team .name { font-size: 12px; font-weight: 500; }
+.score-card .sc-score { font-family: var(--mono); font-size: 28px; font-weight: 600; letter-spacing: -1px; color: var(--text); }
+.score-card .sc-score .lead { color: var(--gold); }
+.score-card .sc-score .vs { color: var(--text-mute); margin: 0 6px; font-weight: 400; font-size: 22px; }
+.score-card .sc-foot { padding: 8px 18px; border-top: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: space-between; font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-mute); }
+.score-card .sc-foot .live { color: var(--live); display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.score-card .sc-foot .live .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--live); animation: pulse 1.5s infinite; }
+
+.search-bar { position: sticky; top: 0; z-index: 10; margin: 0 0 20px; background: linear-gradient(to bottom, var(--bg) 70%, transparent); padding-bottom: 12px; }
+.search-input-wrap { position: relative; display: flex; align-items: center; }
+.search-input-wrap i { position: absolute; left: 18px; color: var(--text-mute); font-size: 14px; }
+.search-input { width: 100%; padding: 14px 18px 14px 46px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; color: var(--text); font-size: 14px; font-family: var(--sans); transition: border-color 0.3s var(--ease-snap), background 0.3s var(--ease-snap); }
+.search-input::placeholder { color: var(--text-mute); }
+.search-input:focus { outline: none; border-color: var(--gold); background: var(--surface-2); box-shadow: 0 0 0 4px var(--gold-glow); }
+
+.chips { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 4px 0; margin-bottom: 22px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { background: var(--surface-1); border: 1px solid var(--border); color: var(--text-soft); padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 500; letter-spacing: 0.3px; cursor: pointer; flex-shrink: 0; transition: all 0.3s var(--ease-snap); }
+.chip:hover { border-color: var(--gold-line); color: var(--text); }
+.chip[aria-pressed="true"] { background: var(--gold); color: #1a1408; border-color: var(--gold); font-weight: 600; }
+
+.editorial { position: relative; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--border); margin-bottom: 22px; cursor: pointer; height: 220px; background: linear-gradient(135deg, #1a1820, #0e0e14); }
+.editorial::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 20%, rgba(201, 162, 74, 0.18), transparent 50%), radial-gradient(circle at 20% 80%, rgba(229, 86, 74, 0.12), transparent 50%); }
+.editorial::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 60%); }
+.editorial-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 22px; }
+.editorial .badge { position: absolute; top: 18px; left: 18px; font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+.editorial h3 { font-family: var(--serif); font-size: 22px; font-weight: 600; margin: 0 0 6px; line-height: 1.15; }
+.editorial p { font-size: 12px; color: var(--text-soft); margin: 0; line-height: 1.5; }
+
+.discover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
+.device.tablet .discover-grid { grid-template-columns: repeat(4, 1fr); }
+.disco-card { position: relative; height: 140px; border-radius: var(--r-md); border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: transform 0.4s var(--ease-luxe), border-color 0.3s var(--ease-snap); background: var(--surface-1); }
+.disco-card:hover { transform: translateY(-3px); border-color: var(--gold-line); }
+.disco-card .accent { position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent, #2a1f15), transparent 70%); }
+.disco-card .corner { position: absolute; top: 14px; left: 14px; font-family: var(--serif); font-size: 32px; font-weight: 700; color: var(--gold); opacity: 0.4; line-height: 1; }
+.disco-card .label { position: absolute; bottom: 14px; left: 14px; font-size: 12px; font-weight: 500; color: var(--text); }
+.disco-card .sub { position: absolute; bottom: 14px; right: 14px; font-size: 10px; color: var(--text-mute); letter-spacing: 1px; text-transform: uppercase; }
+
+.trend-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border-soft); cursor: pointer; }
+.trend-row:last-child { border-bottom: none; }
+.trend-row .num { font-family: var(--serif); font-size: 28px; font-weight: 600; color: var(--gold); width: 32px; letter-spacing: -1px; }
+.trend-row .info { flex: 1; min-width: 0; }
+.trend-row .info .t1 { font-size: 14px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trend-row .info .t2 { font-size: 11px; color: var(--text-mute); letter-spacing: 0.3px; }
+.trend-row .info .t2 i { color: var(--gold); margin-right: 4px; }
+
+.player-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: var(--r-md); margin-bottom: 10px; cursor: pointer; transition: border-color 0.3s var(--ease-snap); }
+.player-row:hover { border-color: var(--gold-line); }
+.player-avatar { width: 48px; height: 48px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, var(--surface-3), var(--surface-1)); border: 1px solid var(--border); display: grid; place-items: center; font-family: var(--serif); font-weight: 700; font-size: 14px; color: var(--gold); flex-shrink: 0; }
+.player-row .pi { flex: 1; min-width: 0; }
+.player-row .pi .pn { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+.player-row .pi .pt { font-size: 11px; color: var(--text-mute); }
+.player-row .ps { font-family: var(--mono); font-size: 12px; color: var(--gold); font-weight: 600; text-align: right; }
+.player-row .ps small { display: block; font-size: 9px; color: var(--text-mute); font-weight: 400; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+.rank-row { display: grid; grid-template-columns: 32px 1fr auto auto; gap: 12px; padding: 14px 16px; background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: var(--r-md); margin-bottom: 8px; align-items: center; cursor: pointer; transition: border-color 0.3s var(--ease-snap); }
+.rank-row:hover { border-color: var(--gold-line); }
+.rank-row .rk { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--text-mute); text-align: center; }
+.rank-row.top .rk { color: var(--gold); }
+.rank-row .rt { display: flex; align-items: center; gap: 10px; }
+.rank-row .rt .crest-mini { width: 28px; height: 28px; font-size: 11px; }
+.rank-row .rt .rn { font-size: 13px; font-weight: 500; }
+.rank-row .rg { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); }
+.rank-row .rwl { font-family: var(--mono); font-size: 12px; color: var(--success); }
+
+.replay-card { position: relative; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border); margin-bottom: 14px; cursor: pointer; background: var(--surface-1); transition: all 0.3s var(--ease-snap); }
+.replay-card:hover { border-color: var(--gold-line); transform: translateY(-2px); }
+.replay-thumb { position: relative; aspect-ratio: 16 / 9; background: linear-gradient(135deg, #1a1820, #0a0a0e); display: grid; place-items: center; overflow: hidden; }
+.replay-thumb::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(201, 162, 74, 0.08), transparent 60%); }
+.replay-play { width: 56px; height: 56px; border-radius: 50%; background: rgba(20, 20, 24, 0.8); backdrop-filter: blur(20px); border: 1px solid var(--gold); color: var(--gold); display: grid; place-items: center; font-size: 16px; z-index: 2; transition: all 0.3s var(--ease-snap); }
+.replay-card:hover .replay-play { background: var(--gold); color: #1a1408; transform: scale(1.1); }
+.replay-thumb .duration { position: absolute; bottom: 10px; right: 10px; padding: 3px 8px; background: rgba(0,0,0,0.7); border-radius: 4px; font-family: var(--mono); font-size: 10px; color: var(--text); z-index: 2; }
+.replay-thumb .game-tag { position: absolute; top: 10px; left: 10px; padding: 4px 8px; background: rgba(20,20,24,0.7); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 4px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); font-weight: 600; z-index: 2; }
+.replay-info { padding: 14px 16px; }
+.replay-info .rt1 { font-family: var(--serif); font-size: 16px; font-weight: 600; line-height: 1.2; margin-bottom: 6px; }
+.replay-info .rt2 { font-size: 11px; color: var(--text-mute); display: flex; gap: 12px; }
+
+.bracket-frame { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); padding: 18px 14px; margin-bottom: 18px; overflow-x: auto; }
+.bracket-rounds { display: flex; gap: 18px; min-width: max-content; }
+.bracket-col { display: flex; flex-direction: column; gap: 14px; min-width: 130px; justify-content: space-around; }
+.bracket-col .rnd { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; text-align: center; font-weight: 600; }
+.match-cell { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; cursor: pointer; transition: border-color 0.3s var(--ease-snap); }
+.match-cell:hover { border-color: var(--gold-line); }
+.match-cell .mt { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; font-size: 11px; }
+.match-cell .mt + .mt { border-top: 1px solid var(--border); }
+.match-cell .mt.win { color: var(--gold); font-weight: 600; }
+.match-cell .mt.win .ms { color: var(--gold); }
+.match-cell .mn { display: flex; align-items: center; gap: 6px; }
+.match-cell .ms { font-family: var(--mono); font-size: 11px; color: var(--text-soft); }
+
+.chat-section { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+.chat-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 4px; }
+.chat-tab { flex: 1; padding: 14px 8px; background: none; border: none; color: var(--text-mute); font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; position: relative; transition: color 0.3s var(--ease-snap); }
+.chat-tab[aria-pressed="true"] { color: var(--gold); }
+.chat-tab[aria-pressed="true"]::after { content: ""; position: absolute; bottom: 0; left: 12%; right: 12%; height: 2px; background: var(--gold); }
+.chat-msgs { padding: 16px 14px; max-height: 380px; overflow-y: auto; }
+.chat-msgs::-webkit-scrollbar { width: 0; }
+.chat-msg { display: flex; gap: 10px; margin-bottom: 14px; }
+.chat-msg .ca { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--border); display: grid; place-items: center; font-family: var(--serif); font-size: 12px; font-weight: 600; color: var(--gold); flex-shrink: 0; }
+.chat-msg .cm { flex: 1; min-width: 0; }
+.chat-msg .cm .cn { font-size: 11px; font-weight: 600; color: var(--gold); display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+.chat-msg .cm .cn .ct { font-size: 10px; color: var(--text-mute); font-weight: 400; letter-spacing: 0.5px; }
+.chat-msg .cm .cb { font-size: 13px; color: var(--text); line-height: 1.45; }
+.chat-input-bar { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--border); background: var(--bg); }
+.chat-input-bar input { flex: 1; padding: 10px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; color: var(--text); font-size: 13px; font-family: var(--sans); }
+.chat-input-bar input:focus { outline: none; border-color: var(--gold); }
+.chat-send { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(180deg, var(--gold-soft), var(--gold)); border: none; color: #1a1408; cursor: pointer; display: grid; place-items: center; font-size: 13px; }
+
+.tier-orb { width: 96px; height: 96px; margin: 0 auto 20px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, var(--gold-soft), var(--gold) 50%, var(--gold-deep)); display: grid; place-items: center; color: #1a1408; font-size: 28px; box-shadow: 0 0 50px var(--gold-glow); position: relative; }
+.tier-orb::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 1px solid var(--gold-line); }
+.points-display { text-align: center; padding: 24px 0; border-bottom: 1px solid var(--border-soft); margin-bottom: 24px; }
+.points-display .pn { font-family: var(--serif); font-size: 48px; font-weight: 600; color: var(--gold); letter-spacing: -1px; line-height: 1; }
+.points-display .pl { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-mute); margin-top: 8px; }
+.progress-track { background: var(--surface-2); height: 4px; border-radius: 4px; overflow: hidden; margin-top: 18px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--gold-soft)); width: 0; transition: width 1.2s var(--ease-luxe); }
+.progress-info { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-mute); margin-top: 10px; }
+
+.loot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.device.tablet .loot-grid { grid-template-columns: repeat(3, 1fr); }
+.loot-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); padding: 22px 16px; text-align: center; cursor: pointer; transition: all 0.3s var(--ease-snap); position: relative; overflow: hidden; }
+.loot-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, var(--gold-glow), transparent 60%); opacity: 0; transition: opacity 0.4s var(--ease-luxe); }
+.loot-card:hover { border-color: var(--gold-line); transform: translateY(-3px); }
+.loot-card:hover::before { opacity: 1; }
+.loot-card .lt-icon { font-size: 32px; margin-bottom: 12px; position: relative; }
+.loot-card .lt-title { font-family: var(--serif); font-size: 15px; font-weight: 600; margin-bottom: 4px; position: relative; }
+.loot-card .lt-sub { font-size: 10px; color: var(--text-mute); letter-spacing: 1px; text-transform: uppercase; position: relative; }
+.loot-card .lt-claim { margin-top: 12px; padding: 6px 12px; background: var(--gold); color: #1a1408; border: none; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; position: relative; }
+.loot-card .lt-claim:disabled { opacity: 0.7; cursor: default; }
+
+.achievement-list { display: flex; flex-direction: column; gap: 8px; }
+.ach-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: var(--r-md); }
+.ach-row.locked { opacity: 0.55; }
+.ach-icon { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; flex-shrink: 0; }
+.ach-row.unlocked .ach-icon { background: rgba(201, 162, 74, 0.1); color: var(--gold); }
+.ach-row.locked .ach-icon { background: var(--surface-3); color: var(--text-mute); }
+.ach-info { flex: 1; min-width: 0; }
+.ach-info .a1 { font-size: 13px; font-weight: 500; }
+.ach-info .a2 { font-size: 11px; color: var(--text-mute); margin-top: 2px; }
+
+.merch-banner { margin-bottom: 22px; padding: 18px 22px; border-radius: var(--r-lg); background: linear-gradient(120deg, rgba(201, 162, 74, 0.08), transparent 60%), var(--surface-1); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; transition: border-color 0.3s var(--ease-snap); }
+.merch-banner:hover { border-color: var(--gold-line); }
+.merch-banner .text { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--text); line-height: 1.3; }
+.merch-banner .text small { display: block; font-size: 10px; font-style: normal; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; font-family: var(--sans); font-weight: 600; }
+
+.merch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.device.tablet .merch-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.product { border-radius: var(--r-md); overflow: hidden; cursor: pointer; transition: transform 0.4s var(--ease-luxe); display: flex; flex-direction: column; }
+.product:hover { transform: translateY(-3px); }
+.product:hover .product-img { border-color: var(--gold-line); }
+.product-img { position: relative; aspect-ratio: 1 / 1.1; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; margin-bottom: 12px; display: grid; place-items: center; transition: border-color 0.3s var(--ease-snap); }
+.product-img .product-art { width: 75%; height: 75%; display: grid; place-items: center; position: relative; }
+.product-img .tag { position: absolute; top: 10px; left: 10px; font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--bg); background: var(--gold); padding: 4px 8px; border-radius: 4px; }
+.product-img .tag.limited { background: var(--text); color: var(--bg); }
+.product-img .fav { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; color: var(--text-soft); display: grid; place-items: center; cursor: pointer; font-size: 11px; transition: color 0.3s var(--ease-snap); }
+.product-img .fav:hover, .product-img .fav.on { color: var(--gold); }
+.product-info { padding: 0 4px; }
+.product-info .cat { font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--text-mute); margin-bottom: 4px; }
+.product-info .title { font-family: var(--serif); font-size: 16px; font-weight: 600; line-height: 1.2; margin-bottom: 6px; }
+.product-info .price { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.3px; }
+.product-info .price.was { color: var(--text-mute); text-decoration: line-through; margin-right: 6px; font-weight: 400; }
+
+.detail-back { position: absolute; top: 16px; left: 16px; z-index: 5; width: 38px; height: 38px; background: rgba(20,20,24,0.7); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 50%; color: var(--text); cursor: pointer; display: grid; place-items: center; }
+.detail-fav { position: absolute; top: 16px; right: 16px; z-index: 5; width: 38px; height: 38px; background: rgba(20,20,24,0.7); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 50%; color: var(--text-soft); cursor: pointer; display: grid; place-items: center; }
+.detail-hero { width: 100%; aspect-ratio: 1 / 0.95; background: var(--surface-1); display: grid; place-items: center; position: relative; border-bottom: 1px solid var(--border); }
+.detail-content { padding: 26px 24px 120px; }
+.detail-content .cat { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+.detail-content h1 { font-family: var(--serif); font-size: 30px; font-weight: 600; margin: 0 0 12px; line-height: 1.1; }
+.detail-content .price-row { font-family: var(--mono); font-size: 20px; margin-bottom: 22px; display: flex; align-items: baseline; gap: 12px; }
+.detail-content .desc { font-size: 14px; color: var(--text-soft); line-height: 1.65; margin-bottom: 26px; }
+.size-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 22px; }
+.size-cell { padding: 12px 0; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 12px; font-weight: 500; text-align: center; cursor: pointer; color: var(--text); transition: all 0.25s var(--ease-snap); }
+.size-cell:hover { border-color: var(--gold-line); }
+.size-cell[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.detail-section { border-top: 1px solid var(--border-soft); padding: 18px 0; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 13px; font-weight: 500; }
+.detail-section i { color: var(--text-mute); }
+
+.atc-bar { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px 28px; background: linear-gradient(to top, var(--bg) 70%, transparent); display: flex; gap: 10px; z-index: 4; }
+.btn-primary { flex: 1; padding: 16px 20px; background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1408; border: none; border-radius: 999px; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 6px 22px var(--gold-glow); transition: transform 0.3s var(--ease-snap); }
+.btn-primary:hover { transform: translateY(-1px); }
+.btn-secondary { width: 56px; background: var(--surface-1); border: 1px solid var(--border); color: var(--text); border-radius: 999px; cursor: pointer; }
+.btn-secondary:hover { border-color: var(--gold); }
+
+.subview-head { padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-soft); }
+.subview-head h2 { font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0; }
+.icon-btn { width: 38px; height: 38px; background: transparent; border: 1px solid var(--border); border-radius: 50%; color: var(--text); cursor: pointer; display: grid; place-items: center; }
+
+.cart-list { padding: 0 24px; }
+.cart-item { display: grid; grid-template-columns: 80px 1fr auto; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--border-soft); align-items: center; }
+.cart-item .ci-img { width: 80px; height: 80px; background: var(--surface-1); border-radius: var(--r-sm); border: 1px solid var(--border); display: grid; place-items: center; }
+.cart-item .ci-info .ci-cat { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-mute); margin-bottom: 4px; }
+.cart-item .ci-info .ci-title { font-family: var(--serif); font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.cart-item .ci-info .ci-meta { font-size: 11px; color: var(--text-soft); }
+.cart-item .ci-right { text-align: right; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.ci-price { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.qty-stepper { display: flex; align-items: center; background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; padding: 2px; }
+.qty-stepper button { width: 24px; height: 24px; background: transparent; border: none; color: var(--text); cursor: pointer; font-size: 12px; }
+.qty-stepper span { font-family: var(--mono); font-size: 12px; width: 22px; text-align: center; }
+
+.cart-summary { margin: 8px 24px 0; padding: 22px 0; border-top: 1px solid var(--border); }
+.summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: var(--text-soft); }
+.summary-row.total { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border-soft); font-family: var(--serif); font-size: 18px; color: var(--text); font-weight: 600; }
+.summary-row.total .val { color: var(--gold); }
+.checkout-cta { margin: 22px 24px 30px; }
+
+.steps { display: flex; align-items: center; gap: 6px; padding: 0 24px 8px; }
+.step { flex: 1; height: 3px; background: var(--border); border-radius: 2px; }
+.step.done { background: var(--gold); }
+.step-labels { display: flex; justify-content: space-between; padding: 6px 24px 18px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-mute); }
+.step-labels span.active { color: var(--gold); }
+
+.checkout-form { padding: 0 24px 30px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-soft); margin-bottom: 8px; }
+.form-group input { width: 100%; padding: 14px 16px; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); font-size: 14px; font-family: var(--sans); transition: border-color 0.3s var(--ease-snap); }
+.form-group input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-glow); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.payment-method { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md); margin-bottom: 8px; cursor: pointer; }
+.payment-method.selected { border-color: var(--gold); background: linear-gradient(120deg, rgba(201, 162, 74, 0.06), var(--surface-1)); }
+.payment-method .pm-icon { width: 36px; height: 24px; background: var(--surface-3); border-radius: 4px; display: grid; place-items: center; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); }
+.payment-method .pm-info { flex: 1; }
+.payment-method .pm-info .pm-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.payment-method .pm-info .pm-sub { font-size: 11px; color: var(--text-mute); }
+.payment-method .pm-radio { width: 18px; height: 18px; border: 1.5px solid var(--border); border-radius: 50%; position: relative; }
+.payment-method.selected .pm-radio { border-color: var(--gold); }
+.payment-method.selected .pm-radio::after { content: ""; position: absolute; inset: 3px; background: var(--gold); border-radius: 50%; }
+
+.order-success { padding: 70px 24px; text-align: center; }
+.success-orb { width: 90px; height: 90px; margin: 0 auto 26px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, var(--gold-soft), var(--gold) 60%, var(--gold-deep)); display: grid; place-items: center; color: #1a1408; font-size: 32px; box-shadow: 0 0 60px var(--gold-glow); }
+.order-success h2 { font-family: var(--serif); font-size: 32px; font-weight: 600; margin: 0 0 10px; }
+.order-success p { color: var(--text-soft); font-size: 14px; line-height: 1.6; max-width: 280px; margin: 0 auto 30px; }
+.order-num { display: inline-block; padding: 8px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; font-family: var(--mono); font-size: 12px; letter-spacing: 1px; color: var(--gold); margin-bottom: 30px; }
+
+.ticket-card { position: relative; background: linear-gradient(155deg, #1c1820 0%, #0e0e14 100%); border: 1px solid var(--gold-line); border-radius: var(--r-lg); padding: 26px 24px; margin-bottom: 16px; overflow: hidden; cursor: pointer; transition: transform 0.4s var(--ease-luxe); }
+.ticket-card:hover { transform: translateY(-3px); }
+.ticket-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(800px 200px at 50% 0%, rgba(201, 162, 74, 0.1), transparent 60%); pointer-events: none; }
+.ticket-card .perf { position: absolute; left: -10px; top: 0; bottom: 0; width: 20px; background: radial-gradient(circle, var(--bg) 4px, transparent 5px); background-size: 20px 20px; }
+.ticket-card .perf.right { left: auto; right: -10px; }
+.ticket-tier { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; }
+.ticket-card h3 { font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 0 0 8px; }
+.ticket-meta { font-size: 12px; color: var(--text-soft); display: flex; gap: 16px; margin-bottom: 18px; }
+.ticket-price { font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--gold); margin-bottom: 14px; }
+.ticket-price small { font-size: 11px; color: var(--text-mute); margin-left: 6px; font-weight: 400; }
+.ticket-features { border-top: 1px dashed var(--border); padding-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 18px; }
+.ticket-feat { font-size: 11px; color: var(--text-soft); display: flex; align-items: center; gap: 8px; }
+.ticket-feat i { color: var(--gold); font-size: 9px; }
+.ticket-buy { width: 100%; padding: 12px; background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #1a1408; border: none; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 16px var(--gold-glow); transition: transform 0.3s var(--ease-snap); }
+.ticket-buy:hover { transform: translateY(-1px); }
+.ticket-buy.outline { background: transparent; color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+
+.profile-head { padding: 24px 24px 26px; text-align: center; border-bottom: 1px solid var(--border-soft); position: relative; }
+.profile-head::before { content: ""; position: absolute; left: 50%; bottom: -1px; transform: translateX(-50%); width: 60%; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+.avatar-wrap { position: relative; width: 96px; height: 96px; margin: 0 auto 16px; }
+.avatar { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #2a2520, #100c08); border: 2px solid var(--gold); display: grid; place-items: center; font-family: var(--serif); font-size: 36px; font-weight: 600; color: var(--gold); box-shadow: 0 0 32px var(--gold-glow); }
+.tier-badge { position: absolute; bottom: -4px; right: -4px; width: 32px; height: 32px; background: var(--bg); border: 1px solid var(--gold); border-radius: 50%; display: grid; place-items: center; color: var(--gold); font-size: 12px; }
+.profile-name { font-family: var(--serif); font-size: 26px; font-weight: 600; margin: 0 0 4px; }
+.profile-tier { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+
+.profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border-soft); padding: 22px 0; margin: 0 24px; }
+.stat-cell { text-align: center; position: relative; }
+.stat-cell + .stat-cell::before { content: ""; position: absolute; left: 0; top: 12%; bottom: 12%; width: 1px; background: var(--border-soft); }
+.stat-num { font-family: var(--serif); font-size: 24px; font-weight: 600; color: var(--gold); }
+.stat-label { font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--text-mute); margin-top: 4px; }
+
+.profile-section { padding: 20px 24px; }
+.profile-section h4 { font-family: var(--serif); font-size: 18px; font-weight: 600; margin: 0 0 14px; }
+
+.list-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--surface-1); border: 1px solid var(--border-soft); border-radius: var(--r-md); margin-bottom: 8px; cursor: pointer; transition: border-color 0.3s var(--ease-snap); }
+.list-row:hover { border-color: var(--gold-line); }
+.list-row .li-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-3); display: grid; place-items: center; color: var(--gold); font-size: 13px; flex-shrink: 0; }
+.list-row .li-text { flex: 1; }
+.list-row .li-text .lt1 { font-size: 13px; font-weight: 500; }
+.list-row .li-text .lt2 { font-size: 11px; color: var(--text-mute); margin-top: 2px; }
+.list-row > i { color: var(--text-mute); font-size: 11px; }
+
+.followed-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.followed-tag { padding: 8px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px; font-size: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: border-color 0.3s var(--ease-snap); }
+.followed-tag:hover { border-color: var(--gold-line); }
+.followed-tag i { color: var(--gold); font-size: 9px; }
+
+.toggle { position: relative; width: 38px; height: 22px; background: var(--surface-3); border-radius: 999px; cursor: pointer; transition: background 0.3s var(--ease-snap); flex-shrink: 0; }
+.toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: var(--text); border-radius: 50%; transition: transform 0.3s var(--ease-luxe); box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.toggle.on { background: var(--gold); }
+.toggle.on::after { transform: translateX(16px); background: #1a1408; }
+
+.tabbar { position: absolute; bottom: 0; left: 0; right: 0; height: 92px; background: linear-gradient(to top, var(--bg) 60%, rgba(8, 8, 10, 0.92)); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid var(--border-soft); display: flex; justify-content: space-around; padding: 10px 0 22px; z-index: 70; }
+.device.tablet .tabbar { height: 84px; padding: 12px 0 18px; }
+.tab { flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; color: var(--text-mute); font-family: var(--sans); padding: 8px 4px; position: relative; transition: color 0.3s var(--ease-snap); }
+.tab i { font-size: 18px; transition: transform 0.3s var(--ease-luxe); }
+.tab span { font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 500; }
+.tab[aria-current="page"] { color: var(--gold); }
+.tab[aria-current="page"] i { transform: translateY(-2px); }
+.tab[aria-current="page"]::after { content: ""; position: absolute; top: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold-glow); }
+
+.home-bar { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); width: 130px; height: 5px; background: var(--text); border-radius: 3px; z-index: 80; opacity: 0.9; }
+
+.toast { position: absolute; bottom: 110px; left: 24px; right: 24px; padding: 14px 18px; background: rgba(20, 20, 24, 0.96); backdrop-filter: blur(20px); border: 1px solid var(--gold); border-radius: var(--r-md); display: flex; align-items: center; gap: 12px; z-index: 200; font-size: 13px; transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.4s var(--ease-luxe); box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px var(--gold-glow); }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast i { color: var(--gold); font-size: 16px; }
+
+.foot { position: relative; z-index: 2; padding: 16px 40px 28px; display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-mute); }
+.foot .right { display: flex; gap: 24px; }
+
+@media (max-width: 900px) {
+  .chrome { padding: 20px 16px 8px; flex-wrap: wrap; gap: 12px; }
+  .chrome-meta { display: none; }
+  .emulator-wrap { padding: 12px 16px 24px; }
+  .device.iphone { width: min(360px, 88vw); height: min(760px, 80vh); }
+  .device.tablet { width: min(640px, 92vw); height: min(840px, 82vh); }
+  .foot { padding: 12px 16px 18px; flex-direction: column; gap: 8px; align-items: center; }
+}
+@media (max-width: 480px) {
+  .chrome { padding: 14px 14px 4px; }
+  .device.iphone { width: 88vw; height: 78vh; }
+  .device.tablet { width: 92vw; height: 80vh; }
+  .brand-text .b1 { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <header class="chrome" role="banner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div class="brand-text">
+        <div class="b1">NECS 2026</div>
+        <div class="b2">Executive Preview</div>
+      </div>
+    </div>
+    <div class="mode-switch" role="radiogroup" aria-label="Choose device frame">
+      <button id="mode-iphone" class="mode-btn" role="radio" aria-pressed="true"><i class="fa-solid fa-mobile-screen"></i> iPhone</button>
+      <button id="mode-tablet" class="mode-btn" role="radio" aria-pressed="false"><i class="fa-solid fa-tablet-screen-button"></i> Tablet</button>
+    </div>
+    <div class="chrome-meta">
+      <span><span class="dot" aria-hidden="true"></span>Live Demo</span>
+      <span>v1.0 · Investor Build</span>
+    </div>
+  </header>
+
+  <main class="emulator-wrap" role="main">
+    <div id="device" class="device iphone" aria-label="Mobile app preview">
+      <div class="device-btn mute" aria-hidden="true"></div>
+      <div class="device-btn vol-up" aria-hidden="true"></div>
+      <div class="device-btn vol-down" aria-hidden="true"></div>
+      <div class="device-btn power" aria-hidden="true"></div>
+
+      <div class="screen" role="application" aria-label="NECS 2026 application">
+        <div class="status-bar" aria-hidden="true">
+          <span id="bar-time">9:41</span>
+          <div class="indicators"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><span class="battery"></span></div>
+        </div>
+        <div class="dynamic-island" aria-hidden="true"></div>
+        <div class="tablet-camera" aria-hidden="true"></div>
+
+        <div class="app-header">
+          <button class="menu-btn" id="open-menu" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
+          <div class="app-header-title" id="app-title">NECS 2026</div>
+          <button class="menu-btn right" id="header-cart" aria-label="Open cart"><i class="fa-solid fa-bag-shopping"></i></button>
+        </div>
+
+        <div class="screen-content">
+
+          <section class="view active" id="view-home" role="region" aria-label="Home">
+            <div class="view-inner">
+              <div class="home-header">
+                <div class="eyebrow">Tonight in Nashville</div>
+                <h1 class="home-greet">Good evening,<br><em>the finals begin</em>.</h1>
+                <p class="home-sub">Six matches live · Day 4 of 5</p>
+              </div>
+
+              <article class="hero" tabindex="0" data-action="match-detail" aria-label="Featured live match">
+                <div class="hero-top">
+                  <span class="live-pill"><span class="pulse" aria-hidden="true"></span>Live · Map 3</span>
+                  <span class="hero-tag">Featured Match</span>
+                </div>
+                <div class="hero-game">Valorant · Semifinal</div>
+                <div class="hero-matchup">
+                  <div class="team"><div class="team-crest gold"><span>SN</span></div><div class="team-name">Sentinels</div><div class="team-record">3W · 1L</div></div>
+                  <div class="score-block"><div class="score-display"><span class="lead">2</span><span class="vs">·</span><span>1</span></div><div class="score-time">Map 3 · 8:42</div></div>
+                  <div class="team"><div class="team-crest"><span>LD</span></div><div class="team-name">LOUD</div><div class="team-record">2W · 2L</div></div>
+                </div>
+                <div class="hero-cta">
+                  <span class="viewers"><i class="fa-solid fa-circle-play"></i>284,392 watching</span>
+                  <button class="btn-watch" data-action="watch-live"><i class="fa-solid fa-play"></i>Watch Live</button>
+                </div>
+              </article>
+
+              <div class="section">
+                <div class="section-head"><h2 class="h-section">Tournament Hub</h2><button class="more" data-go="discover">View All <i class="fa-solid fa-arrow-right"></i></button></div>
+                <div class="quick-grid">
+                  <div class="quick-card" data-go="scores" tabindex="0" role="button"><i class="fa-solid fa-crosshairs"></i><span>Scores</span></div>
+                  <div class="quick-card" data-go="stats" tabindex="0" role="button"><i class="fa-solid fa-chart-bar"></i><span>Stats</span></div>
+                  <div class="quick-card" data-go="bracket" tabindex="0" role="button"><i class="fa-solid fa-sitemap"></i><span>Bracket</span></div>
+                  <div class="quick-card" data-go="replays" tabindex="0" role="button"><i class="fa-solid fa-video"></i><span>Replays</span></div>
+                  <div class="quick-card" data-go="chat" tabindex="0" role="button"><i class="fa-solid fa-comments"></i><span>Chat</span></div>
+                  <div class="quick-card" data-go="rewards" tabindex="0" role="button"><i class="fa-solid fa-gift"></i><span>Rewards</span></div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-head"><h2 class="h-section">Up Next</h2><button class="more" data-go="scores">View All <i class="fa-solid fa-arrow-right"></i></button></div>
+                <div class="match-row" tabindex="0" data-action="match-detail"><div class="team-mini"><div class="crest-mini">G2</div><span class="name">G2 Stride</span></div><div class="meta"><span class="time">9:30</span>Rocket League</div><div class="team-mini right"><span class="name">Karmine Corp</span><div class="crest-mini">KC</div></div></div>
+                <div class="match-row" tabindex="0" data-action="match-detail"><div class="team-mini"><div class="crest-mini">SP</div><span class="name">Sparg0</span></div><div class="meta"><span class="time">10:15</span>Smash Bros</div><div class="team-mini right"><span class="name">acola</span><div class="crest-mini">AC</div></div></div>
+                <div class="match-row" tabindex="0" data-action="match-detail"><div class="team-mini"><div class="crest-mini">FN</div><span class="name">Fnatic</span></div><div class="meta"><span class="time">11:00</span>Valorant</div><div class="team-mini right"><span class="name">Gen.G</span><div class="crest-mini">GG</div></div></div>
+              </div>
+
+              <div class="countdown" role="timer">
+                <div class="eyebrow">Grand Finals</div>
+                <div class="label">May 10 — Bridgestone Arena</div>
+                <div class="countdown-grid">
+                  <div class="cd-cell"><div class="cd-num" id="cd-d">02</div><div class="cd-label">Days</div></div>
+                  <div class="cd-cell"><div class="cd-num" id="cd-h">14</div><div class="cd-label">Hours</div></div>
+                  <div class="cd-cell"><div class="cd-num" id="cd-m">28</div><div class="cd-label">Minutes</div></div>
+                  <div class="cd-cell"><div class="cd-num" id="cd-s">06</div><div class="cd-label">Seconds</div></div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-head"><h2 class="h-section">Championship Field</h2><button class="more" data-go="stats">All Teams <i class="fa-solid fa-arrow-right"></i></button></div>
+                <div class="teams-strip">
+                  <div class="team-card" tabindex="0" data-action="match-detail"><div class="crest-md">SN</div><span class="label">Sentinels</span></div>
+                  <div class="team-card" tabindex="0" data-action="match-detail"><div class="crest-md">FN</div><span class="label">Fnatic</span></div>
+                  <div class="team-card" tabindex="0" data-action="match-detail"><div class="crest-md">GG</div><span class="label">Gen.G</span></div>
+                  <div class="team-card" tabindex="0" data-action="match-detail"><div class="crest-md">KC</div><span class="label">Karmine</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-scores" role="region" aria-label="Live Scores">
+            <div class="view-inner">
+              <div class="home-header">
+                <div class="eyebrow">Live</div>
+                <h1 class="h-display">Scores</h1>
+                <p class="home-sub">12 matches across all games · Updated now</p>
+              </div>
+
+              <div class="game-divider"><i class="fa-solid fa-crosshairs"></i><span class="gd-title">Valorant</span><span class="gd-count">3 Live</span></div>
+              <div class="score-card" tabindex="0" data-action="match-detail"><div class="sc-body"><div class="sc-team lead"><div class="crest-mini">SN</div><span class="name">Sentinels</span></div><div class="sc-score"><span class="lead">2</span><span class="vs">·</span>1</div><div class="sc-team"><div class="crest-mini">LD</div><span class="name">LOUD</span></div></div><div class="sc-foot"><span class="live"><span class="pulse"></span>Live · Map 3</span><span>Best of 5</span></div></div>
+              <div class="score-card" tabindex="0" data-action="match-detail"><div class="sc-body"><div class="sc-team"><div class="crest-mini">PR</div><span class="name">Paper Rex</span></div><div class="sc-score">0<span class="vs">·</span><span class="lead">2</span></div><div class="sc-team lead"><div class="crest-mini">GG</div><span class="name">Gen.G</span></div></div><div class="sc-foot"><span class="live"><span class="pulse"></span>Live</span><span>Best of 3</span></div></div>
+              <div class="score-card" tabindex="0" data-action="match-detail"><div class="sc-body"><div class="sc-team lead"><div class="crest-mini">FN</div><span class="name">Fnatic</span></div><div class="sc-score"><span class="lead">2</span><span class="vs">·</span>1</div><div class="sc-team"><div class="crest-mini">100</div><span class="name">100 Thieves</span></div></div><div class="sc-foot"><span class="live"><span class="pulse"></span>Live</span><span>Best of 5</span></div></div>
+
+              <div class="game-divider"><i class="fa-solid fa-car"></i><span class="gd-title">Rocket League</span><span class="gd-count">3 Live</span></div>
+              <div class="score-card" tabindex="0" data-action="match-detail"><div class="sc-body"><div class="sc-team lead"><div class="crest-mini">KC</div><span class="name">Karmine</span></div><div class="sc-score"><span class="lead">4</span><span class="vs">·</span>2</div><div class="sc-team"><div class="crest-mini">M8</div><span class="name">Moist</span></div></div><div class="sc-foot"><span class="live"><span class="pulse"></span>Live · Game 4</span><span>Best of 7</span></div></div>
+              <div class="score-card" tabindex="0" data-action="match-detail"><div class="sc-body"><div class="sc-team lead"><div class="crest-mini">G2</div><span class="name">G2 Stride</span></div><div class="sc-score"><span class="lead">4</span><span class="vs">·</span>3</div><div class="sc-team"><div class="crest-mini">R1</div><span class="name">Rule One</span></div></div><div class="sc-foot"><span class="live"><span class="pulse"></span>Live</span><span>Best of 7</span></div></div>
+              <div class="score-card" tabindex="0" data-action="match-detail"><div class="sc-body"><div class="sc-team lead"><div class="crest-mini">BD</div><span class="name">Team BDS</span></div><div class="sc-score"><span class="lead">4</span><span class="vs">·</span>1</div><div class="sc-team"><div class="crest-mini">TF</div><span class="name">Falcons</span></div></div><div class="sc-foot"><span class="live"><span class="pulse"></span>Live</span><span>Best of 7</span></div></div>
+
+              <div class="game-divider"><i class="fa-solid fa-fist-raised"></i><span class="gd-title">Smash Bros</span><span class="gd-count">2 Live</span></div>
+              <div class="score-card" tabindex="0" data-action="match-detail"><div class="sc-body"><div class="sc-team lead"><div class="crest-mini">ML</div><span class="name">MkLeo</span></div><div class="sc-score"><span class="lead">3</span><span class="vs">·</span>1</div><div class="sc-team"><div class="crest-mini">MY</div><span class="name">Miya</span></div></div><div class="sc-foot"><span class="live"><span class="pulse"></span>Live</span><span>Best of 5</span></div></div>
+              <div class="score-card" tabindex="0" data-action="match-detail"><div class="sc-body"><div class="sc-team lead"><div class="crest-mini">SP</div><span class="name">Sparg0</span></div><div class="sc-score"><span class="lead">3</span><span class="vs">·</span>0</div><div class="sc-team"><div class="crest-mini">LT</div><span class="name">Light</span></div></div><div class="sc-foot"><span class="live"><span class="pulse"></span>Live · Sweep</span><span>Best of 5</span></div></div>
+            </div>
+          </section>
+
+          <section class="view" id="view-stats" role="region" aria-label="Stats">
+            <div class="view-inner">
+              <div class="home-header">
+                <div class="eyebrow">Performance</div>
+                <h1 class="h-display">Stats</h1>
+                <p class="home-sub">Track every player and team</p>
+              </div>
+
+              <div class="search-bar"><div class="search-input-wrap"><i class="fa-solid fa-search"></i><input class="search-input" type="search" placeholder="Search players, teams…" aria-label="Search stats"></div></div>
+
+              <div class="chips" role="tablist">
+                <button class="chip" role="tab" aria-pressed="true">All</button>
+                <button class="chip" role="tab" aria-pressed="false">Valorant</button>
+                <button class="chip" role="tab" aria-pressed="false">Rocket League</button>
+                <button class="chip" role="tab" aria-pressed="false">Smash Bros</button>
+              </div>
+
+              <div class="section">
+                <h2 class="h-section" style="margin-bottom: 14px;">Trending Players</h2>
+                <div class="player-row" tabindex="0" data-action="match-detail"><div class="player-avatar">TZ</div><div class="pi"><div class="pn">Tenz</div><div class="pt">Sentinels · Valorant</div></div><div class="ps">1.42<small>K/D</small></div></div>
+                <div class="player-row" tabindex="0" data-action="match-detail"><div class="player-avatar">JK</div><div class="pi"><div class="pn">Jknaps</div><div class="pt">G2 Stride · Rocket League</div></div><div class="ps">2.08<small>Goals/G</small></div></div>
+                <div class="player-row" tabindex="0" data-action="match-detail"><div class="player-avatar">ML</div><div class="pi"><div class="pn">MkLeo</div><div class="pt">Independent · Smash Bros</div></div><div class="ps">87%<small>Win Rate</small></div></div>
+                <div class="player-row" tabindex="0" data-action="match-detail"><div class="player-avatar">SP</div><div class="pi"><div class="pn">Sparg0</div><div class="pt">Independent · Smash Bros</div></div><div class="ps">82%<small>Win Rate</small></div></div>
+              </div>
+
+              <div class="section">
+                <h2 class="h-section" style="margin-bottom: 14px;">Team Rankings</h2>
+                <div class="rank-row top" tabindex="0" data-action="match-detail"><div class="rk">1</div><div class="rt"><div class="crest-mini">SN</div><span class="rn">Sentinels</span></div><div class="rg">VAL</div><div class="rwl">5W · 0L</div></div>
+                <div class="rank-row top" tabindex="0" data-action="match-detail"><div class="rk">2</div><div class="rt"><div class="crest-mini">G2</div><span class="rn">G2 Stride</span></div><div class="rg">RL</div><div class="rwl">4W · 1L</div></div>
+                <div class="rank-row top" tabindex="0" data-action="match-detail"><div class="rk">3</div><div class="rt"><div class="crest-mini">100</div><span class="rn">100 Thieves</span></div><div class="rg">VAL</div><div class="rwl">4W · 1L</div></div>
+                <div class="rank-row" tabindex="0" data-action="match-detail"><div class="rk">4</div><div class="rt"><div class="crest-mini">FN</div><span class="rn">Fnatic</span></div><div class="rg">VAL</div><div class="rwl">3W · 2L</div></div>
+                <div class="rank-row" tabindex="0" data-action="match-detail"><div class="rk">5</div><div class="rt"><div class="crest-mini">KC</div><span class="rn">Karmine Corp</span></div><div class="rg">RL</div><div class="rwl">3W · 2L</div></div>
+                <div class="rank-row" tabindex="0" data-action="match-detail"><div class="rk">6</div><div class="rt"><div class="crest-mini">GG</div><span class="rn">Gen.G</span></div><div class="rg">VAL</div><div class="rwl">3W · 2L</div></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-replays" role="region" aria-label="Replays">
+            <div class="view-inner">
+              <div class="home-header">
+                <div class="eyebrow">On Demand</div>
+                <h1 class="h-display">Replays</h1>
+                <p class="home-sub">Every match, every map</p>
+              </div>
+
+              <div class="chips" role="tablist">
+                <button class="chip" role="tab" aria-pressed="true">All</button>
+                <button class="chip" role="tab" aria-pressed="false">Valorant</button>
+                <button class="chip" role="tab" aria-pressed="false">Rocket League</button>
+                <button class="chip" role="tab" aria-pressed="false">Smash Bros</button>
+                <button class="chip" role="tab" aria-pressed="false">Highlights</button>
+              </div>
+
+              <div class="replay-card" tabindex="0" data-action="match-detail"><div class="replay-thumb"><span class="game-tag">Valorant</span><span class="duration">2:14:08</span><div class="replay-play"><i class="fa-solid fa-play"></i></div></div><div class="replay-info"><div class="rt1">Sentinels vs LOUD — Quarterfinals</div><div class="rt2"><span><i class="fa-solid fa-eye"></i> 412K views</span><span>2 hours ago</span></div></div></div>
+              <div class="replay-card" tabindex="0" data-action="match-detail"><div class="replay-thumb"><span class="game-tag">Rocket League</span><span class="duration">1:42:33</span><div class="replay-play"><i class="fa-solid fa-play"></i></div></div><div class="replay-info"><div class="rt1">G2 Stride vs FaZe Clan — 4-2 Comeback</div><div class="rt2"><span><i class="fa-solid fa-eye"></i> 286K views</span><span>4 hours ago</span></div></div></div>
+              <div class="replay-card" tabindex="0" data-action="match-detail"><div class="replay-thumb"><span class="game-tag">Smash Bros</span><span class="duration">0:58:21</span><div class="replay-play"><i class="fa-solid fa-play"></i></div></div><div class="replay-info"><div class="rt1">MkLeo vs Sparg0 — Loser's Bracket Final</div><div class="rt2"><span><i class="fa-solid fa-eye"></i> 198K views</span><span>6 hours ago</span></div></div></div>
+              <div class="replay-card" tabindex="0" data-action="match-detail"><div class="replay-thumb"><span class="game-tag">Highlight</span><span class="duration">0:04:12</span><div class="replay-play"><i class="fa-solid fa-play"></i></div></div><div class="replay-info"><div class="rt1">Top 10 Plays — Day 3</div><div class="rt2"><span><i class="fa-solid fa-eye"></i> 1.2M views</span><span>1 day ago</span></div></div></div>
+              <div class="replay-card" tabindex="0" data-action="match-detail"><div class="replay-thumb"><span class="game-tag">Valorant</span><span class="duration">2:31:55</span><div class="replay-play"><i class="fa-solid fa-play"></i></div></div><div class="replay-info"><div class="rt1">Fnatic vs 100 Thieves — Group Stage</div><div class="rt2"><span><i class="fa-solid fa-eye"></i> 324K views</span><span>1 day ago</span></div></div></div>
+            </div>
+          </section>
+
+          <section class="view" id="view-bracket" role="region" aria-label="Tournament Bracket">
+            <div class="view-inner">
+              <div class="home-header">
+                <div class="eyebrow">The Path to Victory</div>
+                <h1 class="h-display">Bracket</h1>
+                <p class="home-sub">Updated live · 4 games remaining</p>
+              </div>
+
+              <div class="chips" role="tablist">
+                <button class="chip" role="tab" aria-pressed="true">Valorant</button>
+                <button class="chip" role="tab" aria-pressed="false">Rocket League</button>
+                <button class="chip" role="tab" aria-pressed="false">Smash Bros</button>
+              </div>
+
+              <div class="bracket-frame">
+                <div class="bracket-rounds">
+                  <div class="bracket-col">
+                    <div class="rnd">Quarterfinals</div>
+                    <div class="match-cell" data-action="match-detail"><div class="mt win"><div class="mn"><div class="crest-mini">SN</div>Sentinels</div><div class="ms">2</div></div><div class="mt"><div class="mn"><div class="crest-mini">EDG</div>EDG</div><div class="ms">0</div></div></div>
+                    <div class="match-cell" data-action="match-detail"><div class="mt win"><div class="mn"><div class="crest-mini">LD</div>LOUD</div><div class="ms">2</div></div><div class="mt"><div class="mn"><div class="crest-mini">PR</div>Paper Rex</div><div class="ms">1</div></div></div>
+                    <div class="match-cell" data-action="match-detail"><div class="mt win"><div class="mn"><div class="crest-mini">FN</div>Fnatic</div><div class="ms">2</div></div><div class="mt"><div class="mn"><div class="crest-mini">100</div>100T</div><div class="ms">1</div></div></div>
+                    <div class="match-cell" data-action="match-detail"><div class="mt win"><div class="mn"><div class="crest-mini">GG</div>Gen.G</div><div class="ms">2</div></div><div class="mt"><div class="mn"><div class="crest-mini">KC</div>Karmine</div><div class="ms">0</div></div></div>
+                  </div>
+                  <div class="bracket-col">
+                    <div class="rnd">Semifinals</div>
+                    <div class="match-cell" data-action="match-detail" style="border-color: var(--gold-line);"><div class="mt win"><div class="mn"><div class="crest-mini">SN</div>Sentinels</div><div class="ms">2</div></div><div class="mt"><div class="mn"><div class="crest-mini">LD</div>LOUD</div><div class="ms">1</div></div></div>
+                    <div class="match-cell" data-action="match-detail"><div class="mt"><div class="mn"><div class="crest-mini">FN</div>Fnatic</div><div class="ms">—</div></div><div class="mt"><div class="mn"><div class="crest-mini">GG</div>Gen.G</div><div class="ms">—</div></div></div>
+                  </div>
+                  <div class="bracket-col">
+                    <div class="rnd">Grand Final</div>
+                    <div class="match-cell" data-action="match-detail" style="border-color: var(--gold);"><div class="mt"><div class="mn"><div class="crest-mini">SN</div>Sentinels</div><div class="ms">—</div></div><div class="mt"><div class="mn">TBD</div><div class="ms">—</div></div></div>
+                  </div>
+                </div>
+              </div>
+
+              <p style="font-size: 11px; color: var(--text-mute); text-align: center; margin: 16px 0 0; letter-spacing: 1px;">Swipe horizontally to see all rounds</p>
+            </div>
+          </section>
+
+          <section class="view" id="view-chat" role="region" aria-label="Live Chat">
+            <div class="view-inner">
+              <div class="home-header">
+                <div class="eyebrow">Community</div>
+                <h1 class="h-display">Chat</h1>
+                <p class="home-sub">Talk with fans worldwide · 12,408 online</p>
+              </div>
+
+              <div class="chat-section">
+                <div class="chat-tabs" role="tablist">
+                  <button class="chat-tab" role="tab" aria-pressed="true">Live Match</button>
+                  <button class="chat-tab" role="tab" aria-pressed="false">Global</button>
+                  <button class="chat-tab" role="tab" aria-pressed="false">Team</button>
+                </div>
+                <div class="chat-msgs" id="chat-msgs">
+                  <div class="chat-msg"><div class="ca">JT</div><div class="cm"><div class="cn">Jordan_T<span class="ct">2 min ago</span></div><div class="cb">SEN looking unstoppable on Lotus right now. Tenz with the clutch!</div></div></div>
+                  <div class="chat-msg"><div class="ca">MK</div><div class="cm"><div class="cn">MariaK<span class="ct">2 min ago</span></div><div class="cb">LOUD needs to adjust their B-site setup, getting picked apart</div></div></div>
+                  <div class="chat-msg"><div class="ca">DP</div><div class="cm"><div class="cn">DerekP<span class="ct">1 min ago</span></div><div class="cb">That 1v3 was insane. Best clutch of the tournament hands down</div></div></div>
+                  <div class="chat-msg"><div class="ca">AL</div><div class="cm"><div class="cn">AnnaL<span class="ct">1 min ago</span></div><div class="cb">Anyone else watching from Tokyo? Up at 3 AM but worth every second 🔥</div></div></div>
+                  <div class="chat-msg"><div class="ca">SH</div><div class="cm"><div class="cn">Sam_H<span class="ct">1 min ago</span></div><div class="cb">SEN advancing to Grand Final feels inevitable at this point</div></div></div>
+                  <div class="chat-msg"><div class="ca">RB</div><div class="cm"><div class="cn">RyanB<span class="ct">just now</span></div><div class="cb">Is the next match really in 30 minutes? This pacing is incredible</div></div></div>
+                </div>
+                <div class="chat-input-bar">
+                  <input id="chat-input" type="text" placeholder="Send a message…" aria-label="Type a message">
+                  <button class="chat-send" id="chat-send-btn" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-rewards" role="region" aria-label="Rewards">
+            <div class="view-inner">
+              <div class="home-header" style="text-align: center;">
+                <div class="tier-orb"><i class="fa-solid fa-crown"></i></div>
+                <div class="eyebrow" style="justify-content: center;">Gold Member</div>
+                <h1 class="h-display" style="margin-top: 8px;">Rewards</h1>
+              </div>
+
+              <div class="points-display">
+                <div class="pn" id="pts-display">2,840</div>
+                <div class="pl">Loyalty Points</div>
+                <div class="progress-track"><div class="progress-fill" id="prog-fill" data-progress="71"></div></div>
+                <div class="progress-info"><span>Gold</span><span>1,160 to Platinum</span></div>
+              </div>
+
+              <div class="section">
+                <h2 class="h-section" style="margin-bottom: 14px;">Available Rewards</h2>
+                <div class="loot-grid">
+                  <div class="loot-card" data-reward="Founder's Badge" data-cost="500"><div class="lt-icon">🏅</div><div class="lt-title">Founder's Badge</div><div class="lt-sub">Profile · 500 pts</div><button class="lt-claim" data-action="claim-reward">Claim</button></div>
+                  <div class="loot-card" data-reward="Giveaway Entry" data-cost="300"><div class="lt-icon">🎟️</div><div class="lt-title">Giveaway Entry</div><div class="lt-sub">Merch · 300 pts</div><button class="lt-claim" data-action="claim-reward">Claim</button></div>
+                  <div class="loot-card" data-reward="15% Off Code" data-cost="250"><div class="lt-icon">💸</div><div class="lt-title">15% Off Code</div><div class="lt-sub">Store · 250 pts</div><button class="lt-claim" data-action="claim-reward">Claim</button></div>
+                  <div class="loot-card" data-reward="VIP Replay" data-cost="800"><div class="lt-icon">🎬</div><div class="lt-title">VIP Replay</div><div class="lt-sub">Content · 800 pts</div><button class="lt-claim" data-action="claim-reward">Claim</button></div>
+                </div>
+              </div>
+
+              <div class="section">
+                <h2 class="h-section" style="margin-bottom: 14px;">Achievements</h2>
+                <div class="achievement-list">
+                  <div class="ach-row unlocked"><div class="ach-icon"><i class="fa-solid fa-check"></i></div><div class="ach-info"><div class="a1">First Five</div><div class="a2">Watched 5 matches · Unlocked</div></div></div>
+                  <div class="ach-row unlocked"><div class="ach-icon"><i class="fa-solid fa-check"></i></div><div class="ach-info"><div class="a1">Town Crier</div><div class="a2">Posted 50 comments · Unlocked</div></div></div>
+                  <div class="ach-row unlocked"><div class="ach-icon"><i class="fa-solid fa-check"></i></div><div class="ach-info"><div class="a1">Day One</div><div class="a2">Joined during launch week · Unlocked</div></div></div>
+                  <div class="ach-row locked"><div class="ach-icon"><i class="fa-solid fa-lock"></i></div><div class="ach-info"><div class="a1">The Oracle</div><div class="a2">Follow a team to the finals</div></div></div>
+                  <div class="ach-row locked"><div class="ach-icon"><i class="fa-solid fa-lock"></i></div><div class="ach-info"><div class="a1">Marathoner</div><div class="a2">Watch 24 hours of content</div></div></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-discover" role="region" aria-label="Discover">
+            <div class="view-inner">
+              <div class="search-bar">
+                <h1 class="h-display" style="margin: 8px 0 18px;">Discover</h1>
+                <div class="search-input-wrap"><i class="fa-solid fa-search"></i><input class="search-input" type="search" placeholder="Search teams, players, matches…" aria-label="Search"></div>
+              </div>
+
+              <div class="chips" role="tablist">
+                <button class="chip" role="tab" aria-pressed="true">All</button>
+                <button class="chip" role="tab" aria-pressed="false">Valorant</button>
+                <button class="chip" role="tab" aria-pressed="false">Rocket League</button>
+                <button class="chip" role="tab" aria-pressed="false">Smash Bros</button>
+                <button class="chip" role="tab" aria-pressed="false">Players</button>
+                <button class="chip" role="tab" aria-pressed="false">Replays</button>
+              </div>
+
+              <article class="editorial" tabindex="0" data-action="match-detail">
+                <span class="badge">Editor's Pick</span>
+                <div class="editorial-content"><h3>The Champion's Path</h3><p>Inside Sentinels' three-year arc to the Nashville stage</p></div>
+              </article>
+
+              <div class="section">
+                <h2 class="h-section" style="margin-bottom: 16px;">Browse</h2>
+                <div class="discover-grid">
+                  <div class="disco-card" tabindex="0" data-go="scores" role="button" style="--accent: rgba(229, 86, 74, 0.18);"><div class="accent"></div><span class="corner">V</span><span class="label">Valorant</span><span class="sub">12 Matches</span></div>
+                  <div class="disco-card" tabindex="0" data-go="scores" role="button" style="--accent: rgba(108, 162, 255, 0.16);"><div class="accent"></div><span class="corner">R</span><span class="label">Rocket League</span><span class="sub">8 Matches</span></div>
+                  <div class="disco-card" tabindex="0" data-go="scores" role="button" style="--accent: rgba(201, 162, 74, 0.14);"><div class="accent"></div><span class="corner">S</span><span class="label">Smash Bros</span><span class="sub">10 Matches</span></div>
+                  <div class="disco-card" tabindex="0" data-go="stats" role="button" style="--accent: rgba(140, 100, 200, 0.16);"><div class="accent"></div><span class="corner">P</span><span class="label">Top Players</span><span class="sub">128 Athletes</span></div>
+                </div>
+              </div>
+
+              <div class="section">
+                <h2 class="h-section" style="margin-bottom: 8px;">Trending</h2>
+                <div class="trend-row" tabindex="0" data-action="match-detail"><div class="num">01</div><div class="info"><div class="t1">Sentinels vs LOUD — Map 3 Comeback</div><div class="t2"><i class="fa-solid fa-fire"></i>284K watching now</div></div></div>
+                <div class="trend-row" tabindex="0" data-action="match-detail"><div class="num">02</div><div class="info"><div class="t1">MkLeo vs Sparg0 — Loser's Bracket</div><div class="t2"><i class="fa-solid fa-arrow-trend-up"></i>+412% engagement</div></div></div>
+                <div class="trend-row" tabindex="0" data-action="match-detail"><div class="num">03</div><div class="info"><div class="t1">G2 Stride defeats FaZe Clan 4-2</div><div class="t2"><i class="fa-solid fa-clock-rotate-left"></i>Replay · 2h ago</div></div></div>
+                <div class="trend-row" tabindex="0" data-go="bracket" role="button"><div class="num">04</div><div class="info"><div class="t1">Bracket: Day 5 Grand Finals Set</div><div class="t2"><i class="fa-solid fa-trophy"></i>Updated 14m ago</div></div></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-shop" role="region" aria-label="Merchandise store">
+            <div class="view-inner">
+              <div class="home-header"><div class="eyebrow">The Collection</div><h1 class="h-display" style="margin: 8px 0 0;">Atelier</h1></div>
+              <div class="merch-banner" data-go="tickets"><div class="text"><small>Limited Edition</small>Championship capsule — Nashville '26</div><i class="fa-solid fa-arrow-right" style="color: var(--gold);"></i></div>
+              <div class="chips" role="tablist">
+                <button class="chip" role="tab" aria-pressed="true">All</button>
+                <button class="chip" role="tab" aria-pressed="false">Apparel</button>
+                <button class="chip" role="tab" aria-pressed="false">Headwear</button>
+                <button class="chip" role="tab" aria-pressed="false">Memorabilia</button>
+                <button class="chip" role="tab" aria-pressed="false">Accessories</button>
+              </div>
+              <div class="merch-grid" id="product-grid"></div>
+            </div>
+          </section>
+
+          <section class="view" id="view-tickets" role="region" aria-label="Tickets">
+            <div class="view-inner">
+              <div class="home-header">
+                <div class="eyebrow">Bridgestone Arena · May 6–10</div>
+                <h1 class="h-display">Take your seat.</h1>
+                <p class="home-sub">All passes include hospitality access</p>
+              </div>
+
+              <div class="ticket-card" data-tier="Champions Suite" data-price="2400">
+                <div class="perf"></div><div class="perf right"></div>
+                <div class="ticket-tier">Tier I · Founders</div>
+                <h3>Champions Suite</h3>
+                <div class="ticket-meta"><span><i class="fa-regular fa-calendar"></i> 5 Days</span><span><i class="fa-solid fa-utensils"></i> All-Inclusive</span></div>
+                <div class="ticket-price">$2,400<small>per pass</small></div>
+                <div class="ticket-features">
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Premium suite seating</div>
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Player meet & greet</div>
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Backstage tour</div>
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Curated dining</div>
+                </div>
+                <button class="ticket-buy" data-action="buy-ticket">Reserve Suite</button>
+              </div>
+
+              <div class="ticket-card" style="border-color: var(--border);" data-tier="Floor Access" data-price="890">
+                <div class="perf"></div><div class="perf right"></div>
+                <div class="ticket-tier" style="color: var(--text-soft);">Tier II · Premier</div>
+                <h3>Floor Access</h3>
+                <div class="ticket-meta"><span><i class="fa-regular fa-calendar"></i> 5 Days</span><span><i class="fa-solid fa-champagne-glasses"></i> Lounge</span></div>
+                <div class="ticket-price" style="color: var(--text);">$890<small>per pass</small></div>
+                <div class="ticket-features">
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Floor-level seating</div>
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Lounge access</div>
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Welcome reception</div>
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Event program</div>
+                </div>
+                <button class="ticket-buy outline" data-action="buy-ticket">Reserve Floor</button>
+              </div>
+
+              <div class="ticket-card" style="border-color: var(--border);" data-tier="General Admission" data-price="120">
+                <div class="perf"></div><div class="perf right"></div>
+                <div class="ticket-tier" style="color: var(--text-soft);">Tier III · Standard</div>
+                <h3>General Admission</h3>
+                <div class="ticket-meta"><span><i class="fa-regular fa-calendar"></i> Single Day</span></div>
+                <div class="ticket-price" style="color: var(--text);">$120<small>per pass</small></div>
+                <div class="ticket-features">
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Stadium seating</div>
+                  <div class="ticket-feat"><i class="fa-solid fa-circle"></i>Concessions access</div>
+                </div>
+                <button class="ticket-buy outline" data-action="buy-ticket">Buy Pass</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-profile" role="region" aria-label="Account">
+            <div class="profile-head">
+              <div class="avatar-wrap"><div class="avatar">CL</div><div class="tier-badge"><i class="fa-solid fa-crown"></i></div></div>
+              <h1 class="profile-name">Caleb Lai</h1>
+              <div class="profile-tier">Gold Member · Since 2024</div>
+            </div>
+
+            <div class="profile-stats">
+              <div class="stat-cell"><div class="stat-num">47</div><div class="stat-label">Matches</div></div>
+              <div class="stat-cell"><div class="stat-num">12</div><div class="stat-label">Following</div></div>
+              <div class="stat-cell"><div class="stat-num">8</div><div class="stat-label">Achievements</div></div>
+            </div>
+
+            <div class="profile-section">
+              <h4>Following</h4>
+              <div class="followed-tags">
+                <span class="followed-tag" data-action="follow-tag" data-name="Sentinels"><i class="fa-solid fa-star"></i>Sentinels</span>
+                <span class="followed-tag" data-action="follow-tag" data-name="Sparg0"><i class="fa-solid fa-star"></i>Sparg0</span>
+                <span class="followed-tag" data-action="follow-tag" data-name="G2 Stride"><i class="fa-solid fa-star"></i>G2 Stride</span>
+                <span class="followed-tag" data-action="add-follow"><i class="fa-solid fa-plus"></i>Add</span>
+              </div>
+            </div>
+
+            <div class="profile-section">
+              <h4>Account</h4>
+              <div class="list-row" tabindex="0" data-go="tickets" role="button"><div class="li-icon"><i class="fa-solid fa-ticket"></i></div><div class="li-text"><div class="lt1">My Tickets</div><div class="lt2">2 active passes</div></div><i class="fa-solid fa-chevron-right"></i></div>
+              <div class="list-row" tabindex="0" data-action="show-orders" role="button"><div class="li-icon"><i class="fa-solid fa-bag-shopping"></i></div><div class="li-text"><div class="lt1">Order History</div><div class="lt2">5 orders</div></div><i class="fa-solid fa-chevron-right"></i></div>
+              <div class="list-row" tabindex="0" data-go="rewards" role="button"><div class="li-icon"><i class="fa-solid fa-trophy"></i></div><div class="li-text"><div class="lt1">Achievements</div><div class="lt2">8 unlocked · 4 in progress</div></div><i class="fa-solid fa-chevron-right"></i></div>
+            </div>
+
+            <div class="profile-section">
+              <h4>Preferences</h4>
+              <div class="list-row"><div class="li-icon"><i class="fa-solid fa-bell"></i></div><div class="li-text"><div class="lt1">Match Notifications</div><div class="lt2">Live alerts & reminders</div></div><div class="toggle on" role="switch" aria-checked="true" tabindex="0"></div></div>
+              <div class="list-row"><div class="li-icon"><i class="fa-solid fa-universal-access"></i></div><div class="li-text"><div class="lt1">High Contrast Mode</div><div class="lt2">Enhanced readability</div></div><div class="toggle" role="switch" aria-checked="false" tabindex="0"></div></div>
+              <div class="list-row" tabindex="0" data-action="text-size" role="button"><div class="li-icon"><i class="fa-solid fa-text-height"></i></div><div class="li-text"><div class="lt1">Text Size</div><div class="lt2">Standard</div></div><i class="fa-solid fa-chevron-right"></i></div>
+              <div class="list-row" tabindex="0" data-action="language" role="button"><div class="li-icon"><i class="fa-solid fa-globe"></i></div><div class="li-text"><div class="lt1">Language</div><div class="lt2">English (US)</div></div><i class="fa-solid fa-chevron-right"></i></div>
+            </div>
+
+            <div class="profile-section" style="padding-top: 0;">
+              <button class="btn-primary" id="signout-btn" style="width: 100%; background: var(--surface-1); border: 1px solid var(--border); color: var(--text); box-shadow: none;">Sign Out</button>
+            </div>
+          </section>
+
+          <div class="subview" id="sub-match" role="region" aria-label="Match detail" aria-hidden="true">
+            <div style="position: relative; height: 280px; background: linear-gradient(155deg, #1a1418, #0e0e12); overflow: hidden; border-bottom: 1px solid var(--border);">
+              <div style="position: absolute; inset: 0; background: radial-gradient(500px 250px at 50% 100%, var(--gold-glow), transparent 60%);"></div>
+              <button class="detail-back" data-close-sub aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>
+              <button class="detail-fav" id="match-fav" aria-label="Add to favorites"><i class="fa-regular fa-heart"></i></button>
+              <div style="position: absolute; bottom: 30px; left: 0; right: 0; padding: 0 24px;">
+                <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 14px;"><span class="live-pill"><span class="pulse"></span>Live</span></div>
+                <div class="hero-matchup" style="margin: 0;">
+                  <div class="team"><div class="team-crest gold"><span>SN</span></div><div class="team-name">Sentinels</div></div>
+                  <div class="score-block"><div class="score-display"><span class="lead">2</span><span class="vs">·</span>1</div></div>
+                  <div class="team"><div class="team-crest"><span>LD</span></div><div class="team-name">LOUD</div></div>
+                </div>
+              </div>
+            </div>
+            <div style="padding: 24px;">
+              <div class="chips" style="margin-bottom: 24px;">
+                <button class="chip" aria-pressed="true">Overview</button>
+                <button class="chip" aria-pressed="false">Stats</button>
+                <button class="chip" aria-pressed="false">Roster</button>
+                <button class="chip" aria-pressed="false" data-action="match-to-chat">Chat</button>
+              </div>
+              <h3 class="h-section" style="margin-bottom: 12px;">Match Overview</h3>
+              <p class="muted" style="font-size: 13px; line-height: 1.7; margin-bottom: 24px;">Sentinels lead the Valorant semifinal 2–1 after a commanding Map 2 performance on Bind. LOUD took Map 1 on Haven 13–9, forcing a comeback that has now gone the distance. Map 3 is currently on Lotus.</p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                <div style="padding: 18px; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md);"><div style="font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-mute); margin-bottom: 8px;">Map 1 · Haven</div><div style="font-family: var(--mono); font-size: 22px; color: var(--text-soft);">9 — 13</div></div>
+                <div style="padding: 18px; background: var(--surface-1); border: 1px solid var(--gold-line); border-radius: var(--r-md);"><div style="font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px;">Map 2 · Bind</div><div style="font-family: var(--mono); font-size: 22px; color: var(--gold);">13 — 7</div></div>
+              </div>
+              <button class="btn-primary" id="watch-stream" style="width: 100%; margin-top: 8px;"><i class="fa-solid fa-play"></i>Watch Live Stream</button>
+            </div>
+          </div>
+
+          <div class="subview" id="sub-product" role="region" aria-hidden="true">
+            <div class="detail-hero">
+              <button class="detail-back" data-close-sub aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>
+              <button class="detail-fav" id="pd-fav" aria-label="Save to wishlist"><i class="fa-regular fa-heart"></i></button>
+              <div id="pd-art" style="width: 70%; height: 70%; display: grid; place-items: center;"></div>
+            </div>
+            <div class="detail-content">
+              <div class="cat" id="pd-cat">Apparel</div>
+              <h1 id="pd-title">Championship Hoodie</h1>
+              <div class="price-row"><span style="color: var(--gold); font-weight: 600;" id="pd-price">$185</span><span style="color: var(--text-mute); text-decoration: line-through; font-size: 14px;" id="pd-was">$220</span></div>
+              <p class="desc" id="pd-desc">Crafted in heavyweight French terry with a tonal embroidered crest.</p>
+              <div style="margin-bottom: 12px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-soft); font-weight: 600;">Size</div>
+              <div class="size-grid">
+                <div class="size-cell" role="radio" aria-pressed="false" tabindex="0">XS</div>
+                <div class="size-cell" role="radio" aria-pressed="false" tabindex="0">S</div>
+                <div class="size-cell" role="radio" aria-pressed="true" tabindex="0">M</div>
+                <div class="size-cell" role="radio" aria-pressed="false" tabindex="0">L</div>
+                <div class="size-cell" role="radio" aria-pressed="false" tabindex="0">XL</div>
+              </div>
+              <div class="detail-section" data-action="info-shipping"><span><i class="fa-solid fa-truck" style="margin-right: 10px;"></i>Free shipping on orders over $200</span><i class="fa-solid fa-chevron-right"></i></div>
+              <div class="detail-section" data-action="info-returns"><span><i class="fa-solid fa-rotate-left" style="margin-right: 10px;"></i>30-day returns</span><i class="fa-solid fa-chevron-right"></i></div>
+              <div class="detail-section" data-action="info-auth"><span><i class="fa-solid fa-shield" style="margin-right: 10px;"></i>Authenticated · Numbered edition</span><i class="fa-solid fa-chevron-right"></i></div>
+            </div>
+            <div class="atc-bar">
+              <button class="btn-secondary" id="bookmark-btn" aria-label="Save"><i class="fa-regular fa-bookmark"></i></button>
+              <button class="btn-primary" id="atc-btn"><i class="fa-solid fa-bag-shopping"></i>Add to Bag · <span id="atc-price">$185</span></button>
+            </div>
+          </div>
+
+          <div class="subview" id="sub-cart" role="region" aria-hidden="true">
+            <div class="subview-head"><h2>Your Bag</h2><button class="icon-btn" data-close-sub aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="cart-list" id="cart-list"></div>
+            <div id="cart-empty" style="padding: 80px 24px; text-align: center;"><div style="font-size: 40px; color: var(--text-mute); margin-bottom: 16px;"><i class="fa-regular fa-bag-shopping"></i></div><h3 style="font-family: var(--serif); font-size: 22px; margin: 0 0 6px;">Your bag is empty</h3><p style="color: var(--text-soft); font-size: 13px; margin: 0 0 24px;">Discover the championship collection</p><button class="btn-primary" id="empty-shop-btn" style="background: var(--surface-1); border: 1px solid var(--border); color: var(--text); box-shadow: none; padding: 12px 24px;">Browse Shop</button></div>
+            <div class="cart-summary" id="cart-summary" style="display: none;">
+              <div class="summary-row"><span>Subtotal</span><span class="val" id="sum-subtotal">$0</span></div>
+              <div class="summary-row"><span>Shipping</span><span>Complimentary</span></div>
+              <div class="summary-row"><span>Tax (est.)</span><span class="val" id="sum-tax">$0</span></div>
+              <div class="summary-row total"><span>Total</span><span class="val" id="sum-total">$0</span></div>
+            </div>
+            <div class="checkout-cta" id="cart-checkout-cta" style="display: none;"><button class="btn-primary" id="goto-checkout" style="width: 100%;"><i class="fa-solid fa-lock"></i>Secure Checkout</button></div>
+          </div>
+
+          <div class="subview" id="sub-checkout" role="region" aria-hidden="true">
+            <div class="subview-head"><h2>Checkout</h2><button class="icon-btn" data-close-sub aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step"></div></div>
+            <div class="step-labels"><span>Bag</span><span class="active">Shipping & Pay</span><span>Confirm</span></div>
+            <div class="checkout-form">
+              <h4 style="font-family: var(--serif); font-size: 18px; margin: 0 0 14px;">Shipping</h4>
+              <div class="form-group"><label for="co-name">Full Name</label><input id="co-name" type="text" value="Caleb Lai" autocomplete="name"></div>
+              <div class="form-group"><label for="co-addr">Address</label><input id="co-addr" type="text" value="1245 Champion Ave" autocomplete="street-address"></div>
+              <div class="form-row">
+                <div class="form-group"><label for="co-city">City</label><input id="co-city" type="text" value="Nashville" autocomplete="address-level2"></div>
+                <div class="form-group"><label for="co-zip">ZIP</label><input id="co-zip" type="text" value="37201" autocomplete="postal-code"></div>
+              </div>
+              <h4 style="font-family: var(--serif); font-size: 18px; margin: 22px 0 14px;">Payment</h4>
+              <div class="payment-method selected" tabindex="0" role="radio" aria-checked="true"><div class="pm-icon" style="background: linear-gradient(135deg, #C9A24A, #8E6F2A); color: #1a1408;">VISA</div><div class="pm-info"><div class="pm-name">Visa ending 4291</div><div class="pm-sub">Expires 09/28</div></div><div class="pm-radio"></div></div>
+              <div class="payment-method" tabindex="0" role="radio" aria-checked="false"><div class="pm-icon" style="background: #000; color: #fff;"><i class="fa-brands fa-apple"></i></div><div class="pm-info"><div class="pm-name">Apple Pay</div><div class="pm-sub">Touch ID required</div></div><div class="pm-radio"></div></div>
+              <div class="payment-method" tabindex="0" role="radio" aria-checked="false"><div class="pm-icon" style="background: #635BFF; color: #fff;">+</div><div class="pm-info"><div class="pm-name">Add new card</div><div class="pm-sub">Visa, Mastercard, Amex</div></div><div class="pm-radio"></div></div>
+              <div style="margin-top: 28px; padding: 18px; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--r-md);">
+                <div class="summary-row"><span>Subtotal</span><span id="co-subtotal">$0</span></div>
+                <div class="summary-row"><span>Shipping</span><span>Complimentary</span></div>
+                <div class="summary-row"><span>Tax</span><span id="co-tax">$0</span></div>
+                <div class="summary-row total"><span>Total</span><span class="val" id="co-total">$0</span></div>
+              </div>
+              <button class="btn-primary" id="place-order" style="width: 100%; margin-top: 22px;"><i class="fa-solid fa-lock"></i>Place Order</button>
+              <p style="text-align: center; font-size: 11px; color: var(--text-mute); margin-top: 14px; letter-spacing: 0.5px;">Secured by 256-bit encryption</p>
+            </div>
+          </div>
+
+          <div class="subview" id="sub-success" role="region" aria-hidden="true">
+            <div class="subview-head" style="border: none;"><span></span><button class="icon-btn" data-close-sub aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="order-success">
+              <div class="success-orb"><i class="fa-solid fa-check"></i></div>
+              <h2 id="success-title">Order Confirmed</h2>
+              <p id="success-msg">Your championship piece is on its way. Estimated delivery May 12–14.</p>
+              <div class="order-num" id="order-number">NECS-2026-A8F92K</div>
+              <button class="btn-primary" data-close-sub style="background: var(--surface-1); border: 1px solid var(--border); color: var(--text); box-shadow: none;">Continue Browsing</button>
+            </div>
+          </div>
+
+          <div class="menu-overlay" id="menu-overlay" role="dialog" aria-label="All sections" aria-hidden="true">
+            <div class="menu-head">
+              <h2>All Sections</h2>
+              <button class="menu-close" id="menu-close" aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="menu-grid">
+              <div class="menu-item" data-go="home" tabindex="0" role="button"><i class="fa-solid fa-house"></i><span>Home</span></div>
+              <div class="menu-item" data-go="scores" tabindex="0" role="button"><i class="fa-solid fa-crosshairs"></i><span>Scores</span></div>
+              <div class="menu-item" data-go="stats" tabindex="0" role="button"><i class="fa-solid fa-chart-bar"></i><span>Stats</span></div>
+              <div class="menu-item" data-go="replays" tabindex="0" role="button"><i class="fa-solid fa-video"></i><span>Replays</span></div>
+              <div class="menu-item" data-go="bracket" tabindex="0" role="button"><i class="fa-solid fa-sitemap"></i><span>Bracket</span></div>
+              <div class="menu-item" data-go="chat" tabindex="0" role="button"><i class="fa-solid fa-comments"></i><span>Chat</span></div>
+              <div class="menu-item" data-go="rewards" tabindex="0" role="button"><i class="fa-solid fa-gift"></i><span>Rewards</span></div>
+              <div class="menu-item" data-go="discover" tabindex="0" role="button"><i class="fa-solid fa-compass"></i><span>Discover</span></div>
+              <div class="menu-item" data-go="shop" tabindex="0" role="button"><i class="fa-solid fa-bag-shopping"></i><span>Shop</span></div>
+              <div class="menu-item" data-go="tickets" tabindex="0" role="button"><i class="fa-solid fa-ticket"></i><span>Tickets</span></div>
+              <div class="menu-item" data-go="profile" tabindex="0" role="button"><i class="fa-regular fa-user"></i><span>Account</span></div>
+            </div>
+          </div>
+
+          <div class="toast" id="toast" role="status" aria-live="polite"><i class="fa-solid fa-check-circle"></i><span id="toast-msg">Done</span></div>
+        </div>
+
+        <nav class="tabbar" role="navigation" aria-label="Primary">
+          <button class="tab" data-go="home" aria-current="page" aria-label="Home"><i class="fa-solid fa-house"></i><span>Home</span></button>
+          <button class="tab" data-go="scores" aria-label="Scores"><i class="fa-solid fa-crosshairs"></i><span>Scores</span></button>
+          <button class="tab" data-go="bracket" aria-label="Bracket"><i class="fa-solid fa-sitemap"></i><span>Bracket</span></button>
+          <button class="tab" data-go="shop" aria-label="Shop"><i class="fa-solid fa-bag-shopping"></i><span>Shop</span></button>
+          <button class="tab" data-go="profile" aria-label="Profile"><i class="fa-regular fa-user"></i><span>Profile</span></button>
+        </nav>
+        <div class="home-bar" aria-hidden="true"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <span>NECS 2026 · Mobile Application</span>
+    <div class="right"><span>Build · Caleb Lai</span><span>BPA · Event 455</span></div>
+  </footer>
+</div>
+
+<script>
+const device = document.getElementById('device');
+const modeIphone = document.getElementById('mode-iphone');
+const modeTablet = document.getElementById('mode-tablet');
+function setMode(m) {
+  device.classList.toggle('iphone', m === 'iphone');
+  device.classList.toggle('tablet', m === 'tablet');
+  modeIphone.setAttribute('aria-pressed', m === 'iphone');
+  modeTablet.setAttribute('aria-pressed', m === 'tablet');
+}
+modeIphone.addEventListener('click', () => setMode('iphone'));
+modeTablet.addEventListener('click', () => setMode('tablet'));
+
+function tick() {
+  const d = new Date();
+  document.getElementById('bar-time').textContent = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false });
+}
+tick(); setInterval(tick, 1000);
+
+const target = new Date('2026-05-10T19:00:00').getTime();
+function updateCountdown() {
+  const now = Date.now();
+  let diff = Math.max(0, target - now);
+  const d = Math.floor(diff / 86400000); diff -= d * 86400000;
+  const h = Math.floor(diff / 3600000); diff -= h * 3600000;
+  const m = Math.floor(diff / 60000); diff -= m * 60000;
+  const s = Math.floor(diff / 1000);
+  const pad = n => String(n).padStart(2, '0');
+  ['cd-d', 'cd-h', 'cd-m', 'cd-s'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = pad([d, h, m, s][i]);
+  });
+}
+updateCountdown(); setInterval(updateCountdown, 1000);
+
+const titles = {
+  home: 'NECS 2026', scores: 'Live Scores', stats: 'Player Stats',
+  replays: 'Replays', bracket: 'Bracket', chat: 'Live Chat',
+  rewards: 'Rewards', discover: 'Discover', shop: 'Atelier',
+  tickets: 'Tickets', profile: 'Account'
+};
+const views = document.querySelectorAll('.view');
+const tabs = document.querySelectorAll('.tab');
+const menuItems = document.querySelectorAll('.menu-item');
+
+function switchView(name) {
+  views.forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  document.getElementById('app-title').textContent = titles[name] || 'NECS 2026';
+  tabs.forEach(t => {
+    if (t.dataset.go === name) t.setAttribute('aria-current', 'page');
+    else t.removeAttribute('aria-current');
+  });
+  menuItems.forEach(m => m.classList.toggle('active', m.dataset.go === name));
+  const v = document.getElementById('view-' + name);
+  if (v) v.scrollTop = 0;
+  closeMenu();
+  closeAllSubs();
+}
+
+document.querySelectorAll('[data-go]').forEach(el => {
+  const go = el.dataset.go;
+  el.addEventListener('click', e => { e.stopPropagation(); switchView(go); });
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); switchView(go); } });
+});
+
+const menuOverlay = document.getElementById('menu-overlay');
+function openMenu() { menuOverlay.classList.add('open'); menuOverlay.setAttribute('aria-hidden', 'false'); }
+function closeMenu() { menuOverlay.classList.remove('open'); menuOverlay.setAttribute('aria-hidden', 'true'); }
+document.getElementById('open-menu').addEventListener('click', openMenu);
+document.getElementById('menu-close').addEventListener('click', closeMenu);
+menuOverlay.addEventListener('click', e => { if (e.target === menuOverlay) closeMenu(); });
+
+document.getElementById('header-cart').addEventListener('click', () => { renderCartList(); openSub('cart'); });
+
+const subs = {
+  match: document.getElementById('sub-match'),
+  product: document.getElementById('sub-product'),
+  cart: document.getElementById('sub-cart'),
+  checkout: document.getElementById('sub-checkout'),
+  success: document.getElementById('sub-success'),
+};
+const subStack = [];
+function openSub(name) {
+  const el = subs[name];
+  if (!el) return;
+  el.classList.add('open');
+  el.setAttribute('aria-hidden', 'false');
+  el.scrollTop = 0;
+  if (!subStack.includes(name)) subStack.push(name);
+}
+function closeSub() {
+  const t = subStack[subStack.length - 1];
+  if (!t || !subs[t]) return;
+  subs[t].classList.remove('open');
+  subs[t].setAttribute('aria-hidden', 'true');
+  subStack.pop();
+}
+function closeAllSubs() {
+  Object.values(subs).forEach(s => { s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); });
+  subStack.length = 0;
+}
+document.querySelectorAll('[data-close-sub]').forEach(b => b.addEventListener('click', () => closeSub()));
+
+document.querySelectorAll('[data-action="match-detail"]').forEach(el => {
+  el.addEventListener('click', e => { e.stopPropagation(); openSub('match'); });
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); openSub('match'); } });
+});
+
+document.querySelectorAll('[data-action="watch-live"], #watch-stream').forEach(b => {
+  b.addEventListener('click', e => { e.stopPropagation(); openSub('match'); showToast('Streaming live · Sentinels vs LOUD'); });
+});
+
+document.querySelectorAll('[data-action="match-to-chat"]').forEach(b => {
+  b.addEventListener('click', e => { e.stopPropagation(); closeAllSubs(); switchView('chat'); });
+});
+
+const matchFav = document.getElementById('match-fav');
+matchFav.addEventListener('click', () => {
+  const i = matchFav.querySelector('i');
+  const on = i.classList.contains('fa-solid');
+  i.className = on ? 'fa-regular fa-heart' : 'fa-solid fa-heart';
+  i.style.color = on ? '' : 'var(--gold)';
+  showToast(on ? 'Removed from favorites' : 'Added to favorites');
+});
+
+document.querySelectorAll('.chips, .chat-tabs').forEach(group => {
+  group.querySelectorAll('.chip, .chat-tab').forEach(chip => {
+    chip.addEventListener('click', e => {
+      e.stopPropagation();
+      group.querySelectorAll('.chip, .chat-tab').forEach(c => c.setAttribute('aria-pressed', 'false'));
+      chip.setAttribute('aria-pressed', 'true');
+    });
+  });
+});
+
+document.querySelectorAll('.toggle').forEach(t => {
+  const fire = e => {
+    if (e) e.stopPropagation();
+    t.classList.toggle('on');
+    const on = t.classList.contains('on');
+    t.setAttribute('aria-checked', on);
+    const label = t.closest('.list-row')?.querySelector('.lt1')?.textContent || 'Setting';
+    showToast(label + (on ? ' · On' : ' · Off'));
+    if (label.includes('High Contrast')) document.body.style.filter = on ? 'contrast(1.15) saturate(1.1)' : '';
+  };
+  t.addEventListener('click', fire);
+  t.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); fire(); } });
+});
+
+document.querySelectorAll('.size-grid').forEach(grid => {
+  grid.querySelectorAll('.size-cell').forEach(cell => {
+    cell.addEventListener('click', () => {
+      grid.querySelectorAll('.size-cell').forEach(c => c.setAttribute('aria-pressed', 'false'));
+      cell.setAttribute('aria-pressed', 'true');
+      showToast('Size ' + cell.textContent + ' selected');
+    });
+  });
+});
+
+document.querySelectorAll('.payment-method').forEach(pm => {
+  pm.addEventListener('click', () => {
+    document.querySelectorAll('.payment-method').forEach(p => { p.classList.remove('selected'); p.setAttribute('aria-checked', 'false'); });
+    pm.classList.add('selected');
+    pm.setAttribute('aria-checked', 'true');
+  });
+});
+
+const products = [
+  { id: 'p1', cat: 'Apparel', title: 'Championship Hoodie', price: 185, was: 220, tag: 'Limited',
+    art: '<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f1814"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient></defs><rect width="100" height="100" fill="url(#g1)"/><path d="M30 28 L30 80 L70 80 L70 28 L60 24 L60 38 L40 38 L40 24 Z" fill="#1a1a1f" stroke="#C9A24A" stroke-width="0.5"/><text x="50" y="58" text-anchor="middle" font-family="serif" font-size="10" fill="#C9A24A" font-weight="700">N</text></svg>',
+    desc: 'Crafted in heavyweight French terry with a tonal embroidered crest. Engineered in Portugal — finished with archival labeling and a numbered edition.' },
+  { id: 'p2', cat: 'Headwear', title: 'Crested Cap', price: 75,
+    art: '<svg viewBox="0 0 100 100" width="100%" height="100%"><rect width="100" height="100" fill="#0e0e12"/><path d="M20 60 Q20 40 50 38 Q80 40 80 60 L82 65 L18 65 Z" fill="#1a1a1f" stroke="#C9A24A" stroke-width="0.5"/><circle cx="50" cy="52" r="4" fill="#C9A24A"/></svg>',
+    desc: 'Six-panel structured cap with raised metallic crest and leather strap-back closure. Limited to 500 units.' },
+  { id: 'p3', cat: 'Memorabilia', title: 'Trophy Replica', price: 420, tag: 'Numbered',
+    art: '<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E6CB8A"/><stop offset="0.5" stop-color="#C9A24A"/><stop offset="1" stop-color="#8E6F2A"/></linearGradient></defs><rect width="100" height="100" fill="#0a0a0c"/><path d="M40 26 L60 26 L62 50 Q62 64 50 66 Q38 64 38 50 Z" fill="url(#g2)"/><rect x="46" y="66" width="8" height="14" fill="#8E6F2A"/><rect x="38" y="78" width="24" height="6" fill="url(#g2)"/></svg>',
+    desc: 'Hand-finished bronze trophy replica, individually numbered (1 of 250). Each piece documented with certificate of authenticity.' },
+  { id: 'p4', cat: 'Apparel', title: 'Heritage Tee', price: 90,
+    art: '<svg viewBox="0 0 100 100" width="100%" height="100%"><rect width="100" height="100" fill="#11110d"/><path d="M28 32 L42 26 L58 26 L72 32 L68 42 L65 42 L65 78 L35 78 L35 42 L32 42 Z" fill="#0e0e0e" stroke="#C9A24A" stroke-width="0.5"/><text x="50" y="58" text-anchor="middle" font-family="serif" font-size="8" fill="#C9A24A" font-weight="700">NECS</text></svg>',
+    desc: 'Single-piece pima cotton tee with embroidered Nashville coordinates. Pre-washed for soft hand feel.' },
+  { id: 'p5', cat: 'Accessories', title: 'Gold Lapel Pin', price: 45,
+    art: '<svg viewBox="0 0 100 100" width="100%" height="100%"><rect width="100" height="100" fill="#0c0c10"/><circle cx="50" cy="50" r="22" fill="none" stroke="#C9A24A" stroke-width="2"/><text x="50" y="56" text-anchor="middle" font-family="serif" font-size="20" fill="#C9A24A" font-weight="700">N</text></svg>',
+    desc: 'Solid brass lapel pin with 18k gold plating. Presented in a velvet jewelry box.' },
+  { id: 'p6', cat: 'Apparel', title: 'Coach Jacket', price: 245, tag: 'New',
+    art: '<svg viewBox="0 0 100 100" width="100%" height="100%"><rect width="100" height="100" fill="#0e0e12"/><path d="M28 30 L48 26 L52 26 L72 30 L72 80 L28 80 Z" fill="#16161a" stroke="#C9A24A" stroke-width="0.5"/><line x1="50" y1="28" x2="50" y2="80" stroke="#C9A24A" stroke-width="0.3"/><circle cx="50" cy="40" r="0.8" fill="#C9A24A"/><circle cx="50" cy="50" r="0.8" fill="#C9A24A"/><circle cx="50" cy="60" r="0.8" fill="#C9A24A"/></svg>',
+    desc: 'Water-resistant nylon coach jacket with snap-button closure and embroidered side label.' },
+];
+const cart = [];
+const grid = document.getElementById('product-grid');
+products.forEach(p => {
+  const el = document.createElement('article');
+  el.className = 'product';
+  el.tabIndex = 0;
+  el.innerHTML = `
+    <div class="product-img">
+      ${p.tag ? `<span class="tag${p.tag === 'Limited' ? ' limited' : ''}">${p.tag}</span>` : ''}
+      <button class="fav" aria-label="Save" data-fav><i class="fa-regular fa-heart"></i></button>
+      <div class="product-art">${p.art}</div>
+    </div>
+    <div class="product-info">
+      <div class="cat">${p.cat}</div>
+      <div class="title">${p.title}</div>
+      <div class="price">${p.was ? `<span class="was">$${p.was}</span>` : ''}$${p.price}</div>
+    </div>`;
+  el.addEventListener('click', e => { if (!e.target.closest('[data-fav]')) openProductDetail(p); });
+  el.addEventListener('keydown', e => { if (e.key === 'Enter') openProductDetail(p); });
+  el.querySelector('[data-fav]').addEventListener('click', e => {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    btn.classList.toggle('on');
+    const on = btn.classList.contains('on');
+    btn.querySelector('i').className = on ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+    showToast(on ? 'Saved to wishlist' : 'Removed from wishlist');
+  });
+  grid.appendChild(el);
+});
+
+let activeProduct = null;
+function openProductDetail(p) {
+  activeProduct = p;
+  document.getElementById('pd-cat').textContent = p.cat;
+  document.getElementById('pd-title').textContent = p.title;
+  document.getElementById('pd-price').textContent = '$' + p.price;
+  const wasEl = document.getElementById('pd-was');
+  if (p.was) { wasEl.textContent = '$' + p.was; wasEl.style.display = ''; } else { wasEl.style.display = 'none'; }
+  document.getElementById('pd-desc').textContent = p.desc;
+  document.getElementById('pd-art').innerHTML = p.art;
+  document.getElementById('atc-price').textContent = '$' + p.price;
+  const pdFav = document.getElementById('pd-fav');
+  pdFav.querySelector('i').className = 'fa-regular fa-heart';
+  pdFav.style.color = '';
+  openSub('product');
+}
+
+document.getElementById('pd-fav').addEventListener('click', () => {
+  const f = document.getElementById('pd-fav');
+  const i = f.querySelector('i');
+  const on = i.classList.contains('fa-solid');
+  i.className = on ? 'fa-regular fa-heart' : 'fa-solid fa-heart';
+  f.style.color = on ? '' : 'var(--gold)';
+  showToast(on ? 'Removed from wishlist' : 'Saved to wishlist');
+});
+
+document.getElementById('bookmark-btn').addEventListener('click', () => showToast('Saved for later'));
+
+document.getElementById('atc-btn').addEventListener('click', () => {
+  if (!activeProduct) return;
+  const ex = cart.find(i => i.id === activeProduct.id);
+  if (ex) ex.qty++; else cart.push({ ...activeProduct, qty: 1 });
+  updateCartBadge();
+  showToast('Added to bag · ' + activeProduct.title);
+});
+
+function updateCartBadge() {
+  const count = cart.reduce((s, i) => s + i.qty, 0);
+  const headerCart = document.getElementById('header-cart');
+  let badge = headerCart.querySelector('.cart-count-badge');
+  if (count > 0) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'cart-count-badge';
+      headerCart.appendChild(badge);
+    }
+    badge.textContent = count;
+  } else if (badge) {
+    badge.remove();
+  }
+}
+
+function renderCartList() {
+  const list = document.getElementById('cart-list');
+  const empty = document.getElementById('cart-empty');
+  const summary = document.getElementById('cart-summary');
+  const cta = document.getElementById('cart-checkout-cta');
+  list.innerHTML = '';
+  if (!cart.length) { empty.style.display = ''; summary.style.display = 'none'; cta.style.display = 'none'; return; }
+  empty.style.display = 'none'; summary.style.display = ''; cta.style.display = '';
+  cart.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'cart-item';
+    row.innerHTML = `
+      <div class="ci-img">${item.art}</div>
+      <div class="ci-info"><div class="ci-cat">${item.cat}</div><div class="ci-title">${item.title}</div><div class="ci-meta">Size M</div></div>
+      <div class="ci-right">
+        <div class="ci-price">$${item.price * item.qty}</div>
+        <div class="qty-stepper">
+          <button data-act="dec" data-idx="${idx}" aria-label="Decrease">−</button>
+          <span>${item.qty}</span>
+          <button data-act="inc" data-idx="${idx}" aria-label="Increase">+</button>
+        </div>
+      </div>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('button[data-act]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.idx;
+      if (btn.dataset.act === 'inc') cart[idx].qty++;
+      else { cart[idx].qty--; if (cart[idx].qty <= 0) cart.splice(idx, 1); }
+      updateCartBadge(); renderCartList();
+    });
+  });
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = Math.round(subtotal * 0.0925);
+  const total = subtotal + tax;
+  document.getElementById('sum-subtotal').textContent = '$' + subtotal;
+  document.getElementById('sum-tax').textContent = '$' + tax;
+  document.getElementById('sum-total').textContent = '$' + total;
+  document.getElementById('co-subtotal').textContent = '$' + subtotal;
+  document.getElementById('co-tax').textContent = '$' + tax;
+  document.getElementById('co-total').textContent = '$' + total;
+}
+
+document.getElementById('empty-shop-btn').addEventListener('click', () => { closeAllSubs(); switchView('shop'); });
+document.getElementById('goto-checkout').addEventListener('click', () => openSub('checkout'));
+document.getElementById('place-order').addEventListener('click', () => {
+  const code = 'NECS-2026-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+  document.getElementById('order-number').textContent = code;
+  document.getElementById('success-title').textContent = 'Order Confirmed';
+  document.getElementById('success-msg').textContent = 'Your championship piece is on its way. Estimated delivery May 12–14.';
+  closeAllSubs();
+  setTimeout(() => openSub('success'), 80);
+  cart.length = 0; updateCartBadge();
+});
+
+document.querySelectorAll('[data-action="buy-ticket"]').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const card = btn.closest('.ticket-card');
+    const tier = card.dataset.tier;
+    const code = 'TKT-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    document.getElementById('order-number').textContent = code;
+    document.getElementById('success-title').textContent = tier + ' Reserved';
+    document.getElementById('success-msg').textContent = 'Your pass will be available in My Tickets. Confirmation sent to your email.';
+    openSub('success');
+  });
+});
+
+let points = 2840;
+function fmtPoints(n) { return n.toLocaleString('en-US'); }
+document.querySelectorAll('[data-action="claim-reward"]').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const card = btn.closest('.loot-card');
+    const reward = card.dataset.reward;
+    const cost = parseInt(card.dataset.cost);
+    if (points >= cost) {
+      points -= cost;
+      const pd = document.getElementById('pts-display');
+      if (pd) pd.textContent = fmtPoints(points);
+      btn.textContent = 'Claimed';
+      btn.style.background = 'var(--success)';
+      btn.disabled = true;
+      showToast('Claimed: ' + reward);
+    } else {
+      showToast('Not enough points (' + cost + ' needed)');
+    }
+  });
+});
+
+setTimeout(() => {
+  const fill = document.getElementById('prog-fill');
+  if (fill) fill.style.width = fill.dataset.progress + '%';
+}, 400);
+
+document.querySelectorAll('[data-action="follow-tag"]').forEach(t => {
+  t.addEventListener('click', () => {
+    t.style.borderColor = 'var(--gold)';
+    showToast('Unfollowed ' + t.dataset.name);
+    setTimeout(() => { t.style.borderColor = ''; }, 800);
+  });
+});
+document.querySelectorAll('[data-action="add-follow"]').forEach(t => {
+  t.addEventListener('click', () => { switchView('discover'); showToast('Search to follow new teams'); });
+});
+
+const chatInput = document.getElementById('chat-input');
+const chatSend = document.getElementById('chat-send-btn');
+const chatMsgs = document.getElementById('chat-msgs');
+function sendChat() {
+  const v = chatInput.value.trim();
+  if (!v) return;
+  const msg = document.createElement('div');
+  msg.className = 'chat-msg';
+  msg.innerHTML = `<div class="ca">CL</div><div class="cm"><div class="cn">You<span class="ct">just now</span></div><div class="cb">${v.replace(/</g, '&lt;')}</div></div>`;
+  chatMsgs.appendChild(msg);
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  chatInput.value = '';
+}
+chatSend.addEventListener('click', sendChat);
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+
+document.querySelectorAll('[data-action="info-shipping"]').forEach(b => b.addEventListener('click', () => showToast('Free shipping on orders $200+')));
+document.querySelectorAll('[data-action="info-returns"]').forEach(b => b.addEventListener('click', () => showToast('30-day free returns')));
+document.querySelectorAll('[data-action="info-auth"]').forEach(b => b.addEventListener('click', () => showToast('Authenticated · Each piece numbered')));
+
+document.getElementById('signout-btn').addEventListener('click', () => showToast('Signed out · See you soon'));
+document.querySelectorAll('[data-action="show-orders"]').forEach(b => b.addEventListener('click', () => showToast('Order history · 5 orders')));
+document.querySelectorAll('[data-action="text-size"]').forEach(b => b.addEventListener('click', () => {
+  const sizes = ['Small', 'Standard', 'Large', 'Extra Large'];
+  const cur = b.querySelector('.lt2').textContent;
+  const next = sizes[(sizes.indexOf(cur) + 1) % sizes.length];
+  b.querySelector('.lt2').textContent = next;
+  document.body.style.fontSize = { Small: '14px', Standard: '16px', Large: '18px', 'Extra Large': '20px' }[next];
+  showToast('Text size: ' + next);
+}));
+document.querySelectorAll('[data-action="language"]').forEach(b => b.addEventListener('click', () => {
+  const langs = ['English (US)', 'Español', 'Français', '日本語', '한국어'];
+  const cur = b.querySelector('.lt2').textContent;
+  const next = langs[(langs.indexOf(cur) + 1) % langs.length];
+  b.querySelector('.lt2').textContent = next;
+  showToast('Language: ' + next);
+}));
+
+let toastTimer;
+function showToast(msg) {
+  document.getElementById('toast-msg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (subStack.length) closeSub();
+    else if (menuOverlay.classList.contains('open')) closeMenu();
+  }
+});
+document.querySelectorAll('.subview').forEach(sv => sv.addEventListener('click', e => { if (e.target === sv) closeSub(); }));
+</script>
+
+</body>
+</html>
